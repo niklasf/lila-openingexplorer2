@@ -6,6 +6,10 @@
 
 #include "bitboard.h"
 
+uint8_t square(int file, int rank);
+
+void bb_print(uint64_t bb);
+
 struct board {
     uint64_t white;
     uint64_t black;
@@ -29,6 +33,8 @@ struct board {
 void board_clear(struct board *pos);
 
 void board_reset(struct board *pos);
+
+void board_fen(const struct board *pos, char *fen);
 
 bool board_set_fen(struct board *pos, const char *fen);
 

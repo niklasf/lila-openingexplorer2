@@ -1,5 +1,29 @@
 #include "board.h"
 
+#include <stdio.h>
+
+uint8_t square(int file, int rank) {
+    return file + 8 * rank;
+}
+
+void bb_print(uint64_t bb) {
+    for (int rank = 7; rank >= 0; rank--) {
+        for (int file = 0; file < 8; file++) {
+            if (BB_SQUARE(square(file, rank)) & bb) {
+                printf("1");
+            } else {
+                printf(".");
+            }
+
+            if (file == 7) {
+                printf("\n");
+            } else {
+                printf(" ");
+            }
+        }
+    }
+}
+
 void board_clear(struct board *pos) {
     pos->white = 0;
     pos->black = 0;
@@ -34,6 +58,14 @@ void board_reset(struct board *pos) {
 
     pos->halfmove_clock = 0;
     pos->fullmove_number = 1;
+}
+
+void board_fen(const struct board *pos, char *fen) {
+    for (int rank = 7; rank >= 0; rank--) {
+        for (int file = 0; file < 8; file++) {
+            uint64_t bb = BB_SQUARE(square(file, rank));
+        }
+    }
 }
 
 bool board_set_fen(struct board *pos, const char *fen) {

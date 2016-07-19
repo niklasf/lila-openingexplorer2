@@ -3,7 +3,7 @@
 
 #include "board.h"
 
-void test_clear() {
+void test_board_clear() {
     puts("test_clear");
 
     struct board pos;
@@ -12,16 +12,29 @@ void test_clear() {
     assert(pos.turn == true);
 }
 
-void test_reset() {
+void test_board_reset() {
     puts("test_reset");
 
     struct board pos;
     board_reset(&pos);
     assert(BB_E1 & pos.kings);
     assert(BB_C7 & pos.black);
+
+    bb_print(pos.pawns);
 }
 
-void test_set_fen() {
+void test_board_fen() {
+    puts("test_fen");
+
+    struct board pos;
+    board_reset(&pos);
+
+    char fen[255];
+    board_fen(&pos, fen);
+    puts(fen);
+}
+
+void test_board_set_fen() {
     puts("test_set_fen");
 
     struct board pos;
@@ -30,7 +43,8 @@ void test_set_fen() {
 }
 
 int main() {
-    test_clear();
-    test_reset();
-    test_set_fen();
+    test_board_clear();
+    test_board_reset();
+    test_board_fen();
+    test_board_set_fen();
 }
