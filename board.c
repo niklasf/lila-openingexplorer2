@@ -60,12 +60,57 @@ void board_reset(struct board *pos) {
     pos->fullmove_number = 1;
 }
 
-void board_fen(const struct board *pos, char *fen) {
+char *board_board_fen(const struct board *pos, char *fen) {
     for (int rank = 7; rank >= 0; rank--) {
+        int empty = 0;
+
         for (int file = 0; file < 8; file++) {
             uint64_t bb = BB_SQUARE(square(file, rank));
+
+            bool white = pos->white & bb;
+            bool black = pos->black & bb;
+
+            if (white || black) {
+                if (empty) {
+                    *fen++ = '0' + empty;
+                    empty = 0;
+                }
+
+                if (pos->kings & bb) {
+                    *fen++ = white ? 'K' : 'k';
+                } else if (pos->queens & bb) {
+                    *fen++ = white ? 'Q' : 'q';
+                } else if (pos->rooks & bb) {
+                    *fen++ = white ? 'R' : 'r';
+                } else if (pos->bishops & bb) {
+                    *fen++ = white ? 'B' : 'b';
+                } else if (pos->knights & bb) {
+                    *fen++ = white ? 'N' : 'n';
+                } else if (pos->pawns & bb) {
+                    *fen++ = white ? 'P' : 'p';
+                }
+            } else {
+                empty++;
+            }
+
+            if (file == 7) {
+                if (empty) {
+                    *fen++ = '0' + empty;
+                }
+
+                if (rank > 0) {
+                    *fen++ = '/';
+                }
+            }
         }
     }
+
+    return fen;
+}
+
+char *board_fen(const struct board *pos, char *fen) {
+    fen = board_board_fen(pos, fen);
+    return fen;
 }
 
 bool board_set_fen(struct board *pos, const char *fen) {

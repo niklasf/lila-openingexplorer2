@@ -34,7 +34,7 @@ void board_clear(struct board *pos);
 
 void board_reset(struct board *pos);
 
-void board_fen(const struct board *pos, char *fen);
+char *board_fen(const struct board *pos, char *fen);
 
 bool board_set_fen(struct board *pos, const char *fen);
 
