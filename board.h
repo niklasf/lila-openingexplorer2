@@ -24,6 +24,8 @@ struct board {
     int fullmove_number;
 };
 
+void board_clear(struct board *pos);
+
 bool board_set_fen(struct board *pos, const char *fen);
 
 #endif  // #ifndef BOARD_H_
