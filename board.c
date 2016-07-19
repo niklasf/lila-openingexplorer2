@@ -110,6 +110,8 @@ char *board_board_fen(const struct board *pos, char *fen) {
 
 char *board_fen(const struct board *pos, char *fen) {
     fen = board_board_fen(pos, fen);
+    *fen++ = ' ';
+    *fen++ = pos->turn ? 'w' : 'b';
     return fen;
 }
 
