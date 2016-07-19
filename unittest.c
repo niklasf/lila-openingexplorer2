@@ -12,6 +12,15 @@ void test_clear() {
     assert(pos.turn == true);
 }
 
+void test_reset() {
+    puts("test_reset");
+
+    struct board pos;
+    board_reset(&pos);
+    assert(BB_E1 & pos.kings);
+    assert(BB_C7 & pos.black);
+}
+
 void test_set_fen() {
     puts("test_set_fen");
 
@@ -22,5 +31,6 @@ void test_set_fen() {
 
 int main() {
     test_clear();
+    test_reset();
     test_set_fen();
 }

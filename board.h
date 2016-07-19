@@ -4,6 +4,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include "bitboard.h"
+
 struct board {
     uint64_t white;
     uint64_t black;
@@ -25,6 +27,8 @@ struct board {
 };
 
 void board_clear(struct board *pos);
+
+void board_reset(struct board *pos);
 
 bool board_set_fen(struct board *pos, const char *fen);
 
