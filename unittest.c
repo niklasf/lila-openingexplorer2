@@ -29,6 +29,7 @@ void test_board_reset() {
     assert(BB_C7 & pos.black);
 
     bb_print(pos.pawns);
+    board_print(pos);
 }
 
 void test_board_fen() {

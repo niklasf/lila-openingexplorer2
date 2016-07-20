@@ -33,6 +33,8 @@ struct board {
     int fullmove_number;
 };
 
+void board_print(const struct board *pos);
+
 void board_clear(struct board *pos);
 
 void board_reset(struct board *pos);

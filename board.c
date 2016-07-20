@@ -24,6 +24,41 @@ void bb_print(uint64_t bb) {
     }
 }
 
+char board_piece_at(const struct board *pos, uint8_t square) {
+    uint64_t bb = BB_SQUARE(square);
+
+    bool white = pos->white & bb;
+    bool black = pos->black & bb;
+
+    if (white || black) {
+        if (pos->kings & bb) {
+            return white ? 'K' : 'k';
+        } else if (pos->queens & bb) {
+            return white ? 'Q' : 'q';
+        } else if (pos->rooks & bb) {
+            return white ? 'R' : 'r';
+        } else if (pos->bishops & bb) {
+            return white ? 'B' : 'b';
+        } else if (pos->knights & bb) {
+            return white ? 'N' : 'n';
+        } else if (pos->pawns & bb) {
+            return white ? 'P' : 'p';
+        }
+    }
+
+    return 0;
+}
+
+void board_print(const struct board *pos) {
+    for (int rank = 7; rank >= 0; rank--) {
+        for (int file = 0; file < 8; file++) {
+            char piece = board_piece_at(pos, square(file, rank));
+            printf("%c", piece ? piece : '.');
+            printf("%c", file == 7 ? '\n' : ' ');
+        }
+    }
+}
+
 void board_clear(struct board *pos) {
     pos->white = 0;
     pos->black = 0;
@@ -65,30 +100,15 @@ char *board_board_fen(const struct board *pos, char *fen) {
         int empty = 0;
 
         for (int file = 0; file < 8; file++) {
-            uint64_t bb = BB_SQUARE(square(file, rank));
+            char piece = board_piece_at(pos, square(file, rank));
 
-            bool white = pos->white & bb;
-            bool black = pos->black & bb;
-
-            if (white || black) {
+            if (piece) {
                 if (empty) {
                     *fen++ = '0' + empty;
                     empty = 0;
                 }
 
-                if (pos->kings & bb) {
-                    *fen++ = white ? 'K' : 'k';
-                } else if (pos->queens & bb) {
-                    *fen++ = white ? 'Q' : 'q';
-                } else if (pos->rooks & bb) {
-                    *fen++ = white ? 'R' : 'r';
-                } else if (pos->bishops & bb) {
-                    *fen++ = white ? 'B' : 'b';
-                } else if (pos->knights & bb) {
-                    *fen++ = white ? 'N' : 'n';
-                } else if (pos->pawns & bb) {
-                    *fen++ = white ? 'P' : 'p';
-                }
+                *fen++ = piece;
             } else {
                 empty++;
             }
