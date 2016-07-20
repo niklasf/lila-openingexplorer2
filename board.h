@@ -3,12 +3,15 @@
 
 #include <stdbool.h>
 #include <stdint.h>
+#include <popcntintrin.h>
 
 #include "bitboard.h"
 
 uint8_t square(int file, int rank);
 
 void bb_print(uint64_t bb);
+
+#define bb_popcount(x) _mm_popcnt_u64((x))
 
 struct board {
     uint64_t white;

@@ -3,6 +3,14 @@
 
 #include "board.h"
 
+void test_bb_popcount() {
+    puts("test_bb_popcount");
+
+    assert(bb_popcount(BB_A1 | BB_A2 | BB_H7) == 3);
+    assert(bb_popcount(BB_VOID) == 0);
+    assert(bb_popcount(BB_ALL) == 64);
+}
+
 void test_board_clear() {
     puts("test_clear");
 
@@ -43,6 +51,8 @@ void test_board_set_fen() {
 }
 
 int main() {
+    test_bb_popcount();
+
     test_board_clear();
     test_board_reset();
     test_board_fen();
