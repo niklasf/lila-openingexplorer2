@@ -54,8 +54,8 @@ static inline uint8_t bb_poplsb(uint64_t *bb) {
 }
 
 static inline uint8_t bb_popmsb(uint64_t *bb) {
-    uint64_t square = bb_msb(*bb);
-    *bb ^= 1 << square;
+    uint8_t square = bb_msb(*bb);
+    *bb ^= 1ULL << square;
     return square;
 }
 

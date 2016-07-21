@@ -20,10 +20,10 @@ void test_bb_msb() {
 void test_bb_popmsb() {
     puts("test_bb_popmsb");
 
-    uint64_t bb = 8;
+    uint64_t bb = BB_ALL;
     uint8_t msb = bb_popmsb(&bb);
-    assert(msb == 3);
-    assert(bb == 0);
+    assert(msb == 63);
+    assert(bb == (BB_ALL ^ BB_H8));
 }
 
 void test_bb_popcount() {
