@@ -26,6 +26,8 @@ for rank, bb in enumerate(chess.BB_RANKS):
     print("#define BB_RANK_%d 0x%016xULL" % (rank + 1, bb))
 
 print()
+print("#define BB_BACKRANKS (BB_RANK_1 | BB_RANK_8)")
+print()
 
 for name, bb in zip(chess.FILE_NAMES, chess.BB_FILES):
     print("#define BB_FILE_%s 0x%016xULL" % (name.upper(), bb))
