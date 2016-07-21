@@ -39,4 +39,5 @@ int main() {
     test_bb_msb();
     test_bb_popmsb();
     test_bb_popcount();
+    return 0;
 }

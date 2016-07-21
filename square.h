@@ -17,4 +17,6 @@ static inline int square_rank(uint8_t square) {
 
 char *square_name(uint8_t square, char *name);
 
+int square_distance(uint8_t a, uint8_t b);
+
 #endif  // #ifndef SQUARE_H_

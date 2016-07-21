@@ -1,15 +1,19 @@
 CC=clang
-CFLAGS=-Wall -mpopcnt -std=gnu99
+CFLAGS=-Wall -mpopcnt -mbmi2 -std=gnu99
 LDFLAGS=
 
-OBJS = square.o bitboard.o board.o test_bitboard.o test_board.o
+OBJS = square.o bitboard.o board.o test_bitboard.o test_attacks.o test_board.o
 
 .PHONY: test
-test: .depend test_bitboard test_board
+test: .depend test_bitboard test_attacks test_board
 	./test_bitboard
+	./test_attacks
 	./test_board
 
 test_bitboard: test_bitboard.o bitboard.o square.o
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+test_attacks: test_attacks.o attacks.o bitboard.o square.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 test_board: test_board.o board.o bitboard.o square.o

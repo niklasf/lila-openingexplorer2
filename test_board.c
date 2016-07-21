@@ -83,4 +83,5 @@ int main() {
     test_board_shredder_fen();
     test_board_set_fen();
     test_board_is_insufficient_material();
+    return 0;
 }
