@@ -76,6 +76,11 @@ void test_board_set_fen() {
     char fen[255];
     board_shredder_fen(&pos, fen);
     puts(fen);
+
+    assert(board_set_fen(&pos, "rnbqk1nr/ppppppbp/6p1/8/8/5NP1/PPPPPPBP/RNBQK2R b KQkq - 2 3"));
+    board_shredder_fen(&pos, fen);
+    puts(fen);
+    assert(pos.castling == (BB_A1 | BB_A8 | BB_H1 | BB_H8));
 }
 
 int main() {

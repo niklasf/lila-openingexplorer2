@@ -73,7 +73,7 @@ struct board {
 
     bool turn;
 
-    uint64_t castling_rights;
+    uint64_t castling;
 
     uint8_t ep_square;
 
