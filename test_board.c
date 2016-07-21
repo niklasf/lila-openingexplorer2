@@ -27,11 +27,18 @@ void test_board_shredder_fen() {
     puts("test_board_shredder_fen");
 
     struct board pos;
-    board_reset(&pos);
-
     char fen[255];
+
+    board_reset(&pos);
     board_shredder_fen(&pos, fen);
     assert(strcmp(fen, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HAha - 0 1") == 0);
+
+    board_clear(&pos);
+    pos.white |= BB_D1;
+    pos.black |= BB_D8;
+    pos.queens |= BB_D1 | BB_D8;
+    board_shredder_fen(&pos, fen);
+    assert(strcmp(fen, "3q4/8/8/8/8/8/8/3Q4 w - - 0 1") == 0);
 }
 
 void test_board_set_fen() {
