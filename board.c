@@ -179,8 +179,11 @@ bool board_set_fen(struct board *pos, const char *fen) {
     uint64_t black = 0, white = 0;
     uint64_t kings, queens, rooks, bishops, knights, pawns;
     kings = queens = rooks = bishops = knights = pawns = 0;
-    bool turn;
+    bool turn = false;
+    uint8_t ep_square = 0;
+    int hmvc = 0, fmvn = 0;
 
+    // 1. Board setup.
     for (int rank = 7; rank >= 0; rank--) {
         for (int file = 0; file <= 7; file++) {
             uint64_t bb = BB_SQUARE(square(file, rank));
@@ -235,6 +238,7 @@ bool board_set_fen(struct board *pos, const char *fen) {
         }
     }
 
+    // 2. Turn.
     char c = *fen++;
     switch (c) {
         case 'w':
@@ -246,6 +250,61 @@ bool board_set_fen(struct board *pos, const char *fen) {
         default:
             return false;
     }
+    if (*fen++ != ' ') return false;
+
+    // 3. Castling
+    c = *fen++;
+    if (c != '-') {
+        do {
+            // TODO: Parse castling flags
+            if (c >= 'a' && c <= 'h') {
+            } else if (c >= 'A' && c <= 'H') {
+            } else if (c == 'k') {
+            } else if (c == 'K') {
+            } else if (c == 'q') {
+            } else if (c == 'Q') {
+            } else {
+                return false;
+            }
+        } while ((c = *fen++) != ' ');
+    } else if (*fen++ != ' ') return false;
+
+    // 4. En-passant.
+    c = *fen++;
+    if (c != '-') {
+        c = *fen++;
+        if (c >= 'a' && c <= 'h') ep_square = c - 'a';
+        else return false;
+
+        c = *fen++;
+        if (c == '3') ep_square += 2 * 8;
+        else if (c == '6') ep_square += 5 * 8;
+        else return false;
+    }
+    if (*fen++ != ' ') return false;
+
+    // 5. Halfmove clock.
+    c = *fen++;
+    do {
+        if (c >= '0' && c <= '9') hmvc = hmvc * 10 + c - '0';
+        else return false;
+
+        if (hmvc > 9999) hmvc = 9999;
+    } while ((c = *fen++) != ' ');
+
+    // 6. Fullmove number.
+    c = *fen++;
+    do {
+        if (c >= '0' && c <= '9') fmvn = fmvn * 10 + c - '0';
+        else return false;
+
+        if (fmvn > 9999) fmvn = 9999;
+    } while ((c = *fen++) && c != ' ');
+    if (fmvn < 1) fmvn = 1;
+
+    if (c) {
+        return false;
+    }
 
     pos->white = white;
     pos->black = black;
@@ -256,6 +315,9 @@ bool board_set_fen(struct board *pos, const char *fen) {
     pos->knights = knights;
     pos->pawns = pawns;
     pos->turn = turn;
+    pos->ep_square = ep_square;
+    pos->halfmove_clock = hmvc;
+    pos->fullmove_number = fmvn;
 
     return true;
 }
