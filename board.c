@@ -91,6 +91,7 @@ void board_reset(struct board *pos) {
 
     pos->turn = true;
 
+    pos->ep_square = 0;
     pos->castling_rights = pos->rooks;
 
     pos->halfmove_clock = 0;
@@ -162,6 +163,14 @@ char *board_shredder_fen(const struct board *pos, char *fen) {
 
     if (pos->ep_square) fen = square_name(pos->ep_square, fen);
     else *fen++ = '-';
+
+    *fen++ = ' ';
+    int hmvc = (pos->halfmove_clock > 9999) ? 9999 : pos->halfmove_clock;
+    fen += sprintf(fen, "%d", hmvc);
+
+    *fen++ = ' ';
+    int fmvn = (pos->fullmove_number > 9999) ? 9999 : pos->fullmove_number;
+    fen += sprintf(fen, "%d", fmvn);
 
     return fen;
 }

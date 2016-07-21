@@ -63,7 +63,7 @@ void test_board_shredder_fen() {
 
     char fen[255];
     board_shredder_fen(&pos, fen);
-    puts(fen);
+    assert(strcmp(fen, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HAha - 0 1") == 0);
 }
 
 void test_board_set_fen() {
