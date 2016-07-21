@@ -1,3 +1,6 @@
 *.o
+*.swp
 bitboard.h
-unittest
+test_bitboard
+test_board
+.depend

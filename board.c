@@ -1,24 +1,8 @@
-#include "board.h"
-
 #include <stdio.h>
 
-char *square_name(uint8_t square, char *name) {
-    *name++ = 'a' + square_file(square);
-    *name++ = '1' + square_rank(square);
-    return name;
-}
-
-void bb_print(uint64_t bb) {
-    for (int rank = 7; rank >= 0; rank--) {
-        for (int file = 0; file < 8; file++) {
-            if (BB_SQUARE(square(file, rank)) & bb) printf("1");
-            else printf(".");
-
-            if (file == 7) printf("\n");
-            else printf(" ");
-        }
-    }
-}
+#include "board.h"
+#include "bitboard.h"
+#include "square.h"
 
 char board_piece_at(const struct board *pos, uint8_t square) {
     uint64_t bb = BB_SQUARE(square);
