@@ -1,5 +1,5 @@
 CC=clang
-CFLAGS=-Wall -mpopcnt
+CFLAGS=-Wall -mpopcnt -std=gnu99
 LDFLAGS=
 
 .PHONY: test
