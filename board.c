@@ -2,8 +2,10 @@
 
 #include <stdio.h>
 
-uint8_t square(int file, int rank) {
-    return file + 8 * rank;
+char *square_name(uint8_t square, char *name) {
+    *name++ = 'a' + square_file(square);
+    *name++ = '1' + square_rank(square);
+    return name;
 }
 
 void bb_print(uint64_t bb) {
@@ -131,7 +133,13 @@ char *board_board_fen(const struct board *pos, char *fen) {
 char *board_fen(const struct board *pos, char *fen) {
     fen = board_board_fen(pos, fen);
     *fen++ = ' ';
+
     *fen++ = pos->turn ? 'w' : 'b';
+    *fen++ = ' ';
+
+    if (pos->ep_square) fen = square_name(pos->ep_square, fen);
+    else *fen++ = '-';
+
     return fen;
 }
 

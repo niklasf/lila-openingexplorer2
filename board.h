@@ -7,7 +7,19 @@
 
 #include "bitboard.h"
 
-uint8_t square(int file, int rank);
+inline uint8_t square(int file, int rank) {
+    return file + 8 * rank;
+}
+
+inline int square_file(uint8_t square) {
+    return square & 7;
+}
+
+inline int square_rank(uint8_t square) {
+    return square >> 3;
+}
+
+char *square_name(uint8_t square, char *name);
 
 void bb_print(uint64_t bb);
 
