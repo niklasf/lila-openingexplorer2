@@ -1,5 +1,6 @@
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 
 #include "board.h"
 
@@ -50,9 +51,6 @@ void test_board_reset() {
     board_reset(&pos);
     assert(BB_E1 & pos.kings);
     assert(BB_C7 & pos.black);
-
-    bb_print(pos.pawns);
-    board_print(&pos);
 }
 
 void test_board_shredder_fen() {
@@ -72,6 +70,7 @@ void test_board_set_fen() {
     struct board pos;
     assert(board_set_fen(&pos, "8/8/3k4/8/1q4N1/6K1/1p6/4R3 w - - 0 1"));
     assert((pos.white & pos.queens) == 0);
+    board_print(&pos);
 }
 
 int main() {

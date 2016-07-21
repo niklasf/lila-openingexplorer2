@@ -176,6 +176,72 @@ char *board_shredder_fen(const struct board *pos, char *fen) {
 }
 
 bool board_set_fen(struct board *pos, const char *fen) {
-    // pass
-    return false;
+    uint64_t black = 0, white = 0;
+    uint64_t kings, queens, rooks, bishops, knights, pawns;
+    kings = queens = rooks = bishops = knights = pawns = 0;
+
+    for (int rank = 7; rank >= 0; rank--) {
+        for (int file = 0; file <= 7; file++) {
+            uint64_t bb = BB_SQUARE(square(file, rank));
+            char c = *fen++;
+            if (!c) return false;
+
+            if (c >= 'a' && c <= 'z') black |= bb;
+            if (c >= 'A' && c <= 'Z') white |= bb;
+
+            if (c >= '1' && c <= '8') {
+                file += c - '1';
+                continue;
+            }
+
+            switch (c) {
+                case 'k':
+                case 'K':
+                    kings |= bb;
+                    continue;
+                case 'q':
+                case 'Q':
+                    queens |= bb;
+                    continue;
+                case 'r':
+                case 'R':
+                    rooks |= bb;
+                    continue;
+                case 'b':
+                case 'B':
+                    bishops |= bb;
+                    continue;
+                case 'n':
+                case 'N':
+                    knights |= bb;
+                    continue;
+                case 'p':
+                case 'P':
+                    pawns |= bb;
+                    continue;
+
+                default:
+                    return false;
+            }
+        }
+
+        char c = *fen++;
+        if (!c) return false;
+        if (rank > 0) {
+            if (c != '/') return false;
+        } else {
+            if (c != ' ') return false;
+        }
+    }
+
+    pos->white = white;
+    pos->black = black;
+    pos->kings = kings;
+    pos->queens = queens;
+    pos->rooks = rooks;
+    pos->bishops = bishops;
+    pos->knights = knights;
+    pos->pawns = pawns;
+
+    return true;
 }
