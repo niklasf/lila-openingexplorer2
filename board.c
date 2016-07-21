@@ -11,17 +11,11 @@ char *square_name(uint8_t square, char *name) {
 void bb_print(uint64_t bb) {
     for (int rank = 7; rank >= 0; rank--) {
         for (int file = 0; file < 8; file++) {
-            if (BB_SQUARE(square(file, rank)) & bb) {
-                printf("1");
-            } else {
-                printf(".");
-            }
+            if (BB_SQUARE(square(file, rank)) & bb) printf("1");
+            else printf(".");
 
-            if (file == 7) {
-                printf("\n");
-            } else {
-                printf(" ");
-            }
+            if (file == 7) printf("\n");
+            else printf(" ");
         }
     }
 }
@@ -33,19 +27,12 @@ char board_piece_at(const struct board *pos, uint8_t square) {
     bool black = pos->black & bb;
 
     if (white || black) {
-        if (pos->kings & bb) {
-            return white ? 'K' : 'k';
-        } else if (pos->queens & bb) {
-            return white ? 'Q' : 'q';
-        } else if (pos->rooks & bb) {
-            return white ? 'R' : 'r';
-        } else if (pos->bishops & bb) {
-            return white ? 'B' : 'b';
-        } else if (pos->knights & bb) {
-            return white ? 'N' : 'n';
-        } else if (pos->pawns & bb) {
-            return white ? 'P' : 'p';
-        }
+        if (pos->kings & bb) return white ? 'K' : 'k';
+        else if (pos->queens & bb) return white ? 'Q' : 'q';
+        else if (pos->rooks & bb) return white ? 'R' : 'r';
+        else if (pos->bishops & bb) return white ? 'B' : 'b';
+        else if (pos->knights & bb) return white ? 'N' : 'n';
+        else if (pos->pawns & bb) return white ? 'P' : 'p';
     }
 
     return 0;
@@ -56,7 +43,9 @@ void board_print(const struct board *pos) {
         for (int file = 0; file < 8; file++) {
             char piece = board_piece_at(pos, square(file, rank));
             printf("%c", piece ? piece : '.');
-            printf("%c", file == 7 ? '\n' : ' ');
+
+            if (file < 7) printf(" ");
+            else printf("\n");
         }
     }
 }
@@ -106,24 +95,16 @@ char *board_board_fen(const struct board *pos, char *fen) {
             char piece = board_piece_at(pos, square(file, rank));
 
             if (piece) {
-                if (empty) {
-                    *fen++ = '0' + empty;
-                    empty = 0;
-                }
-
+                if (empty) *fen++ = '0' + empty;
                 *fen++ = piece;
+                empty = 0;
             } else {
                 empty++;
             }
 
             if (file == 7) {
-                if (empty) {
-                    *fen++ = '0' + empty;
-                }
-
-                if (rank > 0) {
-                    *fen++ = '/';
-                }
+                if (empty) *fen++ = '0' + empty;
+                if (rank > 0) *fen++ = '/';
             }
         }
     }
@@ -177,60 +158,59 @@ char *board_shredder_fen(const struct board *pos, char *fen) {
 
 bool board_set_fen(struct board *pos, const char *fen) {
     uint64_t black = 0, white = 0;
-    uint64_t kings, queens, rooks, bishops, knights, pawns;
-    kings = queens = rooks = bishops = knights = pawns = 0;
+    uint64_t kings = 0, queens = 0, rooks = 0, bishops = 0,
+             knights = 0, pawns = 0;
+
+    uint64_t castling = 0;
     bool turn = false;
     uint8_t ep_square = 0;
+
     int hmvc = 0, fmvn = 0;
 
+    uint64_t promoted = 0;
+
     // 1. Board setup.
+
     for (int rank = 7; rank >= 0; rank--) {
-        for (int file = 0; file <= 7; file++) {
+        bool last_was_number = false;
+        int file = 0;
+
+        for (; file <= 7; file++) {
             uint64_t bb = BB_SQUARE(square(file, rank));
             char c = *fen++;
-            if (!c) return false;
+
+            if (c == '~') {
+                promoted |= bb;
+                c = *fen++;
+            }
 
             if (c >= 'a' && c <= 'z') black |= bb;
-            if (c >= 'A' && c <= 'Z') white |= bb;
+            else if (c >= 'A' && c <= 'Z') white |= bb;
+            else if (promoted && bb) return false;
 
             if (c >= '1' && c <= '8') {
+                if (last_was_number) return false;
                 file += c - '1';
+                last_was_number = true;
                 continue;
+            } else {
+                last_was_number = false;
             }
 
-            switch (c) {
-                case 'k':
-                case 'K':
-                    kings |= bb;
-                    continue;
-                case 'q':
-                case 'Q':
-                    queens |= bb;
-                    continue;
-                case 'r':
-                case 'R':
-                    rooks |= bb;
-                    continue;
-                case 'b':
-                case 'B':
-                    bishops |= bb;
-                    continue;
-                case 'n':
-                case 'N':
-                    knights |= bb;
-                    continue;
-                case 'p':
-                case 'P':
-                    pawns |= bb;
-                    continue;
-
-                default:
-                    return false;
-            }
+            if (c == 'k' || c == 'K') kings |= bb;
+            else if (c == 'q' || c == 'Q') kings |= bb;
+            else if (c == 'r' || c == 'R') rooks |= bb;
+            else if (c == 'b' || c == 'B') bishops |= bb;
+            else if (c == 'n' || c == 'N') knights |= bb;
+            else if (c == 'p' || c == 'P') pawns |= bb;
+            else return false;
         }
+
+        if (file != 8) return false;
 
         char c = *fen++;
         if (!c) return false;
+
         if (rank > 0) {
             if (c != '/') return false;
         } else {
@@ -239,30 +219,38 @@ bool board_set_fen(struct board *pos, const char *fen) {
     }
 
     // 2. Turn.
+
     char c = *fen++;
-    switch (c) {
-        case 'w':
-            turn = true;
-            break;
-        case 'b':
-            turn = false;
-            break;
-        default:
-            return false;
-    }
+    if (c == 'w') turn = true;
+    else if (c == 'b') turn = false;
+    else return false;
     if (*fen++ != ' ') return false;
 
     // 3. Castling
+
     c = *fen++;
     if (c != '-') {
+        uint64_t white_king = kings & white & BB_RANK_1;
+        uint64_t black_king = kings & black & BB_RANK_8;
+
+        uint64_t white_rooks = rooks & white & BB_RANK_1;
+        uint64_t black_rooks = rooks & black & BB_RANK_8;
+
         do {
-            // TODO: Parse castling flags
             if (c >= 'a' && c <= 'h') {
+                castling |= BB_SQUARE(square(c - 'a', 7));
             } else if (c >= 'A' && c <= 'H') {
+                castling |= BB_SQUARE(square(c - 'A', 0));
             } else if (c == 'k') {
             } else if (c == 'K') {
             } else if (c == 'q') {
+                if (black_king && black_rooks && bb_lsb(black_rooks) < bb_lsb(black_king)) {
+                    castling |= black_rooks & - black_rooks;
+                } else return false;
             } else if (c == 'Q') {
+                if (white_king && white_rooks && bb_lsb(white_rooks) < bb_lsb(white_king)) {
+                    castling |= white_rooks & - white_rooks;
+                } else return false;
             } else {
                 return false;
             }
@@ -270,6 +258,7 @@ bool board_set_fen(struct board *pos, const char *fen) {
     } else if (*fen++ != ' ') return false;
 
     // 4. En-passant.
+
     c = *fen++;
     if (c != '-') {
         c = *fen++;
@@ -284,6 +273,7 @@ bool board_set_fen(struct board *pos, const char *fen) {
     if (*fen++ != ' ') return false;
 
     // 5. Halfmove clock.
+
     c = *fen++;
     do {
         if (c >= '0' && c <= '9') hmvc = hmvc * 10 + c - '0';
@@ -293,6 +283,7 @@ bool board_set_fen(struct board *pos, const char *fen) {
     } while ((c = *fen++) != ' ');
 
     // 6. Fullmove number.
+
     c = *fen++;
     do {
         if (c >= '0' && c <= '9') fmvn = fmvn * 10 + c - '0';
@@ -306,6 +297,8 @@ bool board_set_fen(struct board *pos, const char *fen) {
         return false;
     }
 
+    // Commit board state.
+
     pos->white = white;
     pos->black = black;
     pos->kings = kings;
@@ -314,8 +307,11 @@ bool board_set_fen(struct board *pos, const char *fen) {
     pos->bishops = bishops;
     pos->knights = knights;
     pos->pawns = pawns;
+
     pos->turn = turn;
     pos->ep_square = ep_square;
+    pos->castling_rights = castling;
+
     pos->halfmove_clock = hmvc;
     pos->fullmove_number = fmvn;
 
