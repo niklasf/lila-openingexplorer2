@@ -58,6 +58,8 @@ void test_board_set_fen() {
     board_shredder_fen(&pos, fen);
     puts(fen);
     assert(pos.castling == (BB_A1 | BB_A8 | BB_H1 | BB_H8));
+    assert(pos.queens & pos.white & BB_D1);
+    assert(pos.queens & pos.black & BB_D8);
 }
 
 int main() {

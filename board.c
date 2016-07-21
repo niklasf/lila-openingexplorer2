@@ -182,7 +182,7 @@ bool board_set_fen(struct board *pos, const char *fen) {
             }
 
             if (c == 'k' || c == 'K') kings |= bb;
-            else if (c == 'q' || c == 'Q') kings |= bb;
+            else if (c == 'q' || c == 'Q') queens |= bb;
             else if (c == 'r' || c == 'R') rooks |= bb;
             else if (c == 'b' || c == 'B') bishops |= bb;
             else if (c == 'n' || c == 'N') knights |= bb;
