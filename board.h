@@ -26,10 +26,14 @@ struct board {
     int fullmove_number;
 };
 
-void board_print(const struct board *pos);
 void board_clear(struct board *pos);
 void board_reset(struct board *pos);
-char *board_shredder_fen(const struct board *pos, char *fen);
+
 bool board_set_fen(struct board *pos, const char *fen);
+char *board_shredder_fen(const struct board *pos, char *fen);
+
+void board_print(const struct board *pos);
+
+bool board_is_insufficient_material(const struct board *pos);
 
 #endif  // #ifndef BOARD_H_

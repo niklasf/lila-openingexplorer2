@@ -62,9 +62,25 @@ void test_board_set_fen() {
     assert(pos.queens & pos.black & BB_D8);
 }
 
+void test_board_is_insufficient_material() {
+    puts("test_board_is_insufficient_material");
+
+    struct board pos;
+
+    // King vs king + 2 bishops of the same color.
+    assert(board_set_fen(&pos, "k1K1B1B1/8/8/8/8/8/8/8 w - - 7 32"));
+    assert(board_is_insufficient_material(&pos));
+
+    // Add bishop of opposite color for the weaker side.
+    pos.bishops |= BB_B8;
+    pos.black |= BB_B8;
+    assert(!board_is_insufficient_material(&pos));
+}
+
 int main() {
     test_board_clear();
     test_board_reset();
     test_board_shredder_fen();
     test_board_set_fen();
+    test_board_is_insufficient_material();
 }

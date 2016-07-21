@@ -304,3 +304,12 @@ bool board_set_fen(struct board *pos, const char *fen) {
 
     return true;
 }
+
+bool board_is_insufficient_material(const struct board *pos) {
+    if (pos->pawns || pos->rooks || pos->queens) return false;
+    else if (bb_popcount(pos->black | pos->white) <= 3) return true;
+    else if (pos->knights) return false;
+    else if (!(pos->bishops & BB_DARK_SQUARES)) return true;
+    else if (!(pos->bishops & BB_LIGHT_SQUARES)) return true;
+    else return false;
+}
