@@ -179,6 +179,7 @@ bool board_set_fen(struct board *pos, const char *fen) {
     uint64_t black = 0, white = 0;
     uint64_t kings, queens, rooks, bishops, knights, pawns;
     kings = queens = rooks = bishops = knights = pawns = 0;
+    bool turn;
 
     for (int rank = 7; rank >= 0; rank--) {
         for (int file = 0; file <= 7; file++) {
@@ -234,6 +235,18 @@ bool board_set_fen(struct board *pos, const char *fen) {
         }
     }
 
+    char c = *fen++;
+    switch (c) {
+        case 'w':
+            turn = true;
+            break;
+        case 'b':
+            turn = false;
+            break;
+        default:
+            return false;
+    }
+
     pos->white = white;
     pos->black = black;
     pos->kings = kings;
@@ -242,6 +255,7 @@ bool board_set_fen(struct board *pos, const char *fen) {
     pos->bishops = bishops;
     pos->knights = knights;
     pos->pawns = pawns;
+    pos->turn = turn;
 
     return true;
 }
