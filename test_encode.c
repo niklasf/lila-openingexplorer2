@@ -27,29 +27,36 @@ void test_encode_gameid() {
     char encoded[16] = { };
     char decoded[16] = { };
 
-    const char *id_1 = "BE73q6WUCBeu";
+    const char *id_1 = "000000000000";
     encode_gameid(encoded, id_1);
     decode_gameid(encoded, decoded);
+    assert(strlen(decoded) > 0);
     printf("- %s %s\n", id_1, decoded);
     assert(strcmp(id_1, decoded) == 0);
 
-    const char *id_2 = "000000000000";
+    const char *id_2 = "0000000000aa";
     encode_gameid(encoded, id_2);
     decode_gameid(encoded, decoded);
     printf("- %s %s\n", id_2, decoded);
     assert(strcmp(id_2, decoded) == 0);
 
-    const char *id_3 = "aaaaaaaaaaaa";
+    const char *id_3 = "BE73q6WUCBeu";
     encode_gameid(encoded, id_3);
     decode_gameid(encoded, decoded);
     printf("- %s %s\n", id_3, decoded);
     assert(strcmp(id_3, decoded) == 0);
 
-    const char *id_4 = "AAAAAAAAAAAA";
+    const char *id_4 = "aaaaaaaaaaaa";
     encode_gameid(encoded, id_4);
     decode_gameid(encoded, decoded);
     printf("- %s %s\n", id_4, decoded);
     assert(strcmp(id_4, decoded) == 0);
+
+    const char *id_5 = "AAAAAAAAAAAA";
+    encode_gameid(encoded, id_5);
+    decode_gameid(encoded, decoded);
+    printf("- %s %s\n", id_5, decoded);
+    assert(strcmp(id_5, decoded) == 0);
 }
 
 int main() {
