@@ -356,6 +356,120 @@ uint64_t board_checkers(const struct board *pos) {
     return board_attacks_to(pos, bb_lsb(king)) & them;
 }
 
+uint64_t board_castling_rights(const board_t *pos) {
+    uint64_t castling = pos->castling & pos->rooks;
+    uint64_t white_castling = castling & BB_RANK_1 & pos->white;
+    uint64_t black_castling = castling & BB_RANK_8 & pos->black;
+
+    // TODO: Castling right clean-up for Chess960.
+    white_castling &= BB_A1 | BB_H1;
+    black_castling &= BB_A8 | BB_H8;
+
+    if (!(pos->white & pos->kings & BB_E1)) white_castling = 0;
+    if (!(pos->black & pos->kings & BB_E8)) black_castling = 0;
+
+    return white_castling | black_castling;
+}
+
+move_t *board_castling_moves(const board_t *pos, move_t *moves, uint64_t from_mask, uint64_t to_mask) {
+    uint64_t we, them, backrank;
+    if (pos->turn) {
+        we = pos->white;
+        them = pos->black;
+        backrank = BB_RANK_1;
+    } else {
+        we = pos->black;
+        them = pos->white;
+        backrank = BB_RANK_8;
+    }
+
+    uint64_t king_bb = we & pos->kings & from_mask & backrank;
+    uint64_t candidates = board_castling_rights(pos) & backrank & to_mask;
+    if (!king_bb || !candidates) return moves;
+    square_t king = bb_lsb(king_bb);
+
+    if (board_checkers(pos)) return moves;
+
+    uint64_t bb_a = BB_FILE_A & backrank;
+    uint64_t bb_c = BB_FILE_C & backrank;
+    uint64_t bb_d = BB_FILE_D & backrank;
+    uint64_t bb_f = BB_FILE_F & backrank;
+    uint64_t bb_g = BB_FILE_G & backrank;
+
+    do {
+        uint64_t rook_bb = candidates & -candidates;
+        square_t rook = bb_poplsb(&candidates);
+        bool a_side = square_file(rook) < square_file(king);
+
+        if (a_side && (rook_bb & BB_FILE_B) && (them & (pos->queens | pos->rooks) & bb_a)) {
+            // We can't castle a-side because our rook shielded us from an
+            // attack from a1 or a8.
+            continue;
+        }
+
+        uint64_t empty_for_rook = 0, empty_for_king = 0;
+
+        if (a_side) {
+            if (!(rook_bb & bb_d)) {
+                empty_for_rook =
+                    attacks_rook(rook, rook_bb | bb_d) &
+                    attacks_rook(bb_lsb(bb_d), rook_bb | bb_d);
+
+                empty_for_rook |= bb_d;
+            }
+
+            if (!(king_bb & bb_c)) {
+                empty_for_king =
+                    attacks_rook(king, king_bb | bb_c) &
+                    attacks_rook(bb_lsb(bb_c), king_bb | bb_c);
+
+                empty_for_king |= bb_c;
+            }
+        } else {
+            if (!(rook_bb & bb_f)) {
+                empty_for_rook =
+                    attacks_rook(rook, rook_bb | bb_f) &
+                    attacks_rook(bb_lsb(bb_f), rook_bb | bb_f);
+
+                empty_for_rook |= bb_f;
+            }
+
+            if (!(king_bb & bb_g)) {
+                empty_for_king =
+                    attacks_rook(king, king_bb | bb_g) &
+                    attacks_rook(bb_lsb(bb_g), king_bb | bb_g);
+
+                empty_for_king |= bb_g;
+            }
+        }
+
+        empty_for_rook &= ~king_bb;
+        empty_for_rook &= ~rook_bb;
+
+        empty_for_king &= ~king_bb;
+        uint64_t not_attacked_for_king = empty_for_king;
+        empty_for_king &= ~rook_bb;
+
+        if ((pos->white | pos->black) & (empty_for_king | empty_for_rook)) {
+            continue;
+        }
+
+        bool any_attacked = false;
+        while (not_attacked_for_king) {
+            square_t test_square = bb_poplsb(&not_attacked_for_king);
+            if (board_attacks_to(pos, test_square) & them) {
+                any_attacked = true;
+                break;
+            }
+        }
+        if (any_attacked) continue;
+
+        *moves++ = move_make(king, rook, 0);
+    } while (candidates);
+
+    return moves;
+}
+
 move_t *board_pseudo_legal_moves(const board_t *pos, move_t *moves, uint64_t from_mask, uint64_t to_mask) {
     // Generate piece moves.
     uint64_t our_pieces = pos->turn ? pos->white : pos->black;
@@ -369,6 +483,9 @@ move_t *board_pseudo_legal_moves(const board_t *pos, move_t *moves, uint64_t fro
         }
 
     }
+
+    // Generate castling moves.
+    moves = board_castling_moves(pos, moves, from_mask, to_mask);
 
     // TODO: Generate castling moves.
 

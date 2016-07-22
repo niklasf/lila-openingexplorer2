@@ -123,7 +123,7 @@ void test_board_pseudo_legal_moves() {
     puts("test_board_pseudo_legal_moves");
 
     struct board pos;
-    board_reset(&pos);
+    assert(board_set_fen(&pos, "rnbqk2r/ppppppbp/5np1/8/3P4/5NP1/PPP1PPBP/RNBQK2R b KQkq d3 0 4"));
 
     move_t moves[255];
     move_t *end = board_pseudo_legal_moves(&pos, moves, BB_ALL, BB_ALL);
