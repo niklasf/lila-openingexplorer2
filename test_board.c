@@ -173,6 +173,31 @@ void test_board_legal_moves() {
     assert((end - moves) == 32);
 }
 
+void test_legal_promotion() {
+    puts("test_legal_promotion");
+
+    board_t pos;
+    assert(board_set_fen(&pos, "4k3/1P6/8/8/8/8/8/4K3 w - - 0 1"));
+    move_t moves[255];
+    move_t *end = board_legal_moves(&pos, moves, BB_ALL, BB_ALL);
+
+    move_t needle = move_make(SQ_B7, SQ_B8, 'q');
+    bool found = false;
+    bool found_uci = false;
+    for (move_t *current = moves; current < end; current++) {
+        if (*current == needle) found = true;
+
+        char uci[6];
+        move_uci(*current, uci);
+        if (strcmp(uci, "b7b8q") == 0) found_uci = true;
+
+        puts(uci);
+    }
+
+    assert(found);
+    assert(found_uci);
+}
+
 int main() {
     attacks_init();
 
@@ -187,5 +212,6 @@ int main() {
     test_board_pseudo_legal_moves();
     test_board_pseudo_legal_ep();
     test_board_legal_moves();
+    test_legal_promotion();
     return 0;
 }
