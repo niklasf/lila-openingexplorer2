@@ -98,8 +98,9 @@ char *board_board_fen(const struct board *pos, char *fen) {
 }
 
 char *board_castling_shredder_fen(const struct board *pos, char *castling_fen) {
-    uint64_t white_castling = pos->castling & BB_RANK_1;
-    uint64_t black_castling = pos->castling & BB_RANK_8;
+    uint64_t castling = board_castling_rights(pos);
+    uint64_t white_castling = castling & BB_RANK_1;
+    uint64_t black_castling = castling & BB_RANK_8;
 
     if (!white_castling && !black_castling) {
         *castling_fen++ = '-';
