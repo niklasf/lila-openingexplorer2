@@ -372,9 +372,9 @@ uint64_t board_attacks_from(const struct board *pos, uint8_t square) {
     else return 0;
 }
 
-uint64_t board_checkers(const struct board *pos) {
+uint64_t board_checkers(const struct board *pos, bool turn) {
     uint64_t we, them;
-    if (pos->turn) {
+    if (turn) {
         we = pos->white;
         them = pos->black;
     } else {
@@ -453,7 +453,7 @@ move_t *board_castling_moves(const board_t *pos, move_t *moves, uint64_t from_ma
     if (!king_bb || !candidates) return moves;
     square_t king = bb_lsb(king_bb);
 
-    if (board_checkers(pos)) return moves;
+    if (board_checkers(pos, pos->turn)) return moves;
 
     uint64_t bb_a = BB_FILE_A & backrank;
     uint64_t bb_c = BB_FILE_C & backrank;
@@ -710,7 +710,7 @@ move_t *board_legal_moves(const board_t *pos, move_t *moves, uint64_t from_mask,
         test_board = *pos;
         board_move(&test_board, *first);
 
-        if (!board_checkers(&test_board)) {
+        if (!board_checkers(&test_board, pos->turn)) {
             *moves++ = *first;
         }
 

@@ -116,11 +116,11 @@ void test_board_checkers() {
 
     struct board pos;
     board_reset(&pos);
-    assert(!board_checkers(&pos));
+    assert(!board_checkers(&pos, pos.turn));
 
     assert(board_set_fen(&pos, "r1bqk2r/pppp1Bpp/2n2n2/2b1p1N1/4P3/8/PPPP1PPP/RNBQK2R b KQkq - 0 5"));
     assert(pos.turn == false);
-    uint64_t checkers = board_checkers(&pos);
+    uint64_t checkers = board_checkers(&pos, pos.turn);
     assert(checkers == BB_F7);
 }
 

@@ -15,7 +15,7 @@ unsigned long perft(const board_t *pos, unsigned depth) {
     for (move_t *current = moves; current < end; current++) {
         board_t pos_after = *pos;
         board_move(&pos_after, *current);
-        if (!board_checkers(&pos_after)) result += perft(&pos_after, depth - 1);
+        if (!board_checkers(&pos_after, pos->turn)) result += perft(&pos_after, depth - 1);
     }
 
     return result;
