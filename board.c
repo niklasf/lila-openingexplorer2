@@ -693,7 +693,7 @@ void board_move(board_t *pos, move_t move) {
         }
     } else {
         // Put piece on target square.
-        board_set_piece_at(pos, move_to(move), piece);
+        board_set_piece_at(pos, move_to(move), promotion ? promotion : piece);
     }
 
     // Swap turn.

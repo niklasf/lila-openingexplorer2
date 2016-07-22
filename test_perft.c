@@ -54,7 +54,7 @@ void test_position_4() {
 
     // The position after f1f2.
     board_move(&pos, move_make(SQ_F1, SQ_F2, 0));
-    print_perfts(&pos, 2);
+    assert(perft(&pos, 2) == 1623);
 }
 
 void test_tricky() {
