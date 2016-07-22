@@ -130,6 +130,8 @@ void test_random_epd() {
             if (p < 100000) assert(perft(&pos, depth) == p);
         }
     }
+
+    fclose(file);
 }
 
 int main() {
