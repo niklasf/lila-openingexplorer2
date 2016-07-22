@@ -249,7 +249,6 @@ bool board_set_fen(struct board *pos, const char *fen) {
 
     c = *fen++;
     if (c != '-') {
-        c = *fen++;
         if (c >= 'a' && c <= 'h') ep_square = c - 'a';
         else return false;
 
