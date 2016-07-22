@@ -5,7 +5,7 @@
 
 #include "encode.h"
 
-char *encode_uint(char *buffer, unsigned long value) {
+uint8_t *encode_uint(uint8_t *buffer, unsigned long value) {
     while (value > 127) {
         *buffer++ = (value & 127) | 128;
         value >>= 7;
@@ -16,7 +16,7 @@ char *encode_uint(char *buffer, unsigned long value) {
     return buffer;
 }
 
-const char *decode_uint(const char *buffer, unsigned long *value) {
+const uint8_t *decode_uint(const uint8_t *buffer, unsigned long *value) {
     *value = 0;
 
     size_t i = 0;
@@ -30,7 +30,9 @@ const char *decode_uint(const char *buffer, unsigned long *value) {
 
 static const char BASE_62[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-char *encode_gameid(char *buffer, const char *game_id) {
+uint8_t *encode_gameid(uint8_t *buffer, const char *game_id) {
+    uint8_t *s = buffer;
+
     uint64_t bytes = 0;
 
     for (int i = 0; i < 12; i++) {
@@ -41,6 +43,8 @@ char *encode_gameid(char *buffer, const char *game_id) {
         else assert(false);
     }
 
+    printf("o: %lu\n", bytes);
+
     *buffer++ = bytes & 255;
     *buffer++ = (bytes >> 8) & 255;
     *buffer++ = (bytes >> 16) & 255;
@@ -48,10 +52,14 @@ char *encode_gameid(char *buffer, const char *game_id) {
     *buffer++ = (bytes >> 32) & 255;
     *buffer++ = (bytes >> 40) & 255;
 
+    printf("o: %d %d %d %d %d %d %d %d\n", s[0], s[1], s[2], s[3], s[4], s[5], s[6], s[7]);
+
     return buffer;
 }
 
-const char *decode_gameid(const char *buffer, char *game_id) {
+const uint8_t *decode_gameid(const uint8_t *buffer, char *game_id) {
+    printf("i: %d %d %d %d %d %d %d %d\n", buffer[0], buffer[1], buffer[2], buffer[3], buffer[4], buffer[5], buffer[6], buffer[7]);
+
     uint64_t bytes = 0;
     bytes |= *buffer++;
     bytes |= ((uint64_t) *buffer++) << 8;
@@ -59,6 +67,8 @@ const char *decode_gameid(const char *buffer, char *game_id) {
     bytes |= ((uint64_t) *buffer++) << 24;
     bytes |= ((uint64_t) *buffer++) << 32;
     bytes |= ((uint64_t) *buffer++) << 40;
+
+    printf("i: %lu\n", bytes);
 
     for (int i = 11; i >= 0; i--) {
         lldiv_t r = lldiv(bytes, 62);
