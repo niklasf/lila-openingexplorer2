@@ -86,6 +86,10 @@ void test_board_attacks_to() {
     board_reset(&pos);
     uint64_t attacks = board_attacks_to(&pos, SQ_F6);
     assert(attacks == (BB_G8 | BB_E7 | BB_G7));
+
+    assert(board_set_fen(&pos, "r1bqk2r/pppp1Bpp/2n2n2/2b1p1N1/4P3/8/PPPP1PPP/RNBQK2R b KQkq - 0 5"));
+    attacks = board_attacks_to(&pos, SQ_E8);
+    assert(attacks & BB_F7);
 }
 
 void test_board_attacks_from() {
@@ -102,6 +106,19 @@ void test_board_attacks_from() {
     assert(attacks == (BB_C1 | BB_C2 | BB_D2 | BB_E2 | BB_E1));
 }
 
+void test_board_checkers() {
+    puts("test_board_checkers");
+
+    struct board pos;
+    board_reset(&pos);
+    assert(!board_checkers(&pos));
+
+    assert(board_set_fen(&pos, "r1bqk2r/pppp1Bpp/2n2n2/2b1p1N1/4P3/8/PPPP1PPP/RNBQK2R b KQkq - 0 5"));
+    assert(pos.turn == false);
+    uint64_t checkers = board_checkers(&pos);
+    assert(checkers == BB_F7);
+}
+
 int main() {
     attacks_init();
 
@@ -112,5 +129,6 @@ int main() {
     test_board_is_insufficient_material();
     test_board_attacks_to();
     test_board_attacks_from();
+    test_board_checkers();
     return 0;
 }

@@ -339,3 +339,19 @@ uint64_t board_attacks_from(const struct board *pos, uint8_t square) {
     else if (pos->pawns & bb) return attacks_pawn(square, (pos->black & bb) == 0);
     else return 0;
 }
+
+uint64_t board_checkers(const struct board *pos) {
+    uint64_t we, them;
+    if (pos->turn) {
+        we = pos->white;
+        them = pos->black;
+    } else {
+        we = pos->black;
+        them = pos->white;
+    }
+
+    uint64_t king = we & pos->kings;
+    if (!king) return 0;
+
+    return board_attacks_to(pos, bb_lsb(king)) & them;
+}
