@@ -355,3 +355,24 @@ uint64_t board_checkers(const struct board *pos) {
 
     return board_attacks_to(pos, bb_lsb(king)) & them;
 }
+
+move_t *board_pseudo_legal_moves(const board_t *pos, move_t *moves, uint64_t from_mask, uint64_t to_mask) {
+    // Generate piece moves.
+    uint64_t our_pieces = pos->turn ? pos->white : pos->black;
+    uint64_t non_pawns = our_pieces & ~pos->pawns & from_mask;
+    while (non_pawns) {
+        square_t from_square = bb_poplsb(&non_pawns);
+        uint64_t to_squares = board_attacks_from(pos, from_square) & ~our_pieces & to_mask;
+        while (to_squares) {
+            square_t to_square = bb_poplsb(&to_squares);
+            *moves++ = move_make(from_square, to_square, 0);
+        }
+
+    }
+
+    // TODO: Generate castling moves.
+
+    // TODO: Generate pawn moves.
+
+    return moves;
+}

@@ -3,6 +3,8 @@
 
 #include <stdint.h>
 
+typedef uint8_t square_t;
+
 static inline uint8_t square(int file, int rank) {
     return file + 8 * rank;
 }

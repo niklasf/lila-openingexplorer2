@@ -1,6 +1,5 @@
 *.o
 *.swp
-bitboard.h
 test_bitboard
 test_attacks
 test_board

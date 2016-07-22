@@ -3,6 +3,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <assert.h>
 
 #include "square.h"
 
@@ -56,5 +57,7 @@ static inline char move_piece_type(move_t move) {
 
     return 0;
 }
+
+char *move_uci(move_t move, char *uci);
 
 #endif  // #ifndef MOVE_H_

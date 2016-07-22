@@ -119,6 +119,21 @@ void test_board_checkers() {
     assert(checkers == BB_F7);
 }
 
+void test_board_pseudo_legal_moves() {
+    puts("test_board_pseudo_legal_moves");
+
+    struct board pos;
+    board_reset(&pos);
+
+    move_t moves[255];
+    move_t *end = board_pseudo_legal_moves(&pos, moves, BB_ALL, BB_ALL);
+    for (move_t *current = moves; current < end; current++) {
+        char uci[6];
+        move_uci(*current, uci);
+        puts(uci);
+    }
+}
+
 int main() {
     attacks_init();
 
@@ -130,5 +145,6 @@ int main() {
     test_board_attacks_to();
     test_board_attacks_from();
     test_board_checkers();
+    test_board_pseudo_legal_moves();
     return 0;
 }

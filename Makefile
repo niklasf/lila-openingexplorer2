@@ -16,7 +16,7 @@ test_bitboard: test_bitboard.o bitboard.o square.o
 test_attacks: test_attacks.o attacks.o bitboard.o square.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-test_board: test_board.o board.o attacks.o bitboard.o square.o
+test_board: test_board.o board.o attacks.o bitboard.o move.o square.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 .depend:

@@ -4,9 +4,9 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-/* Boards */
+#include "move.h"
 
-struct board {
+typedef struct board {
     uint64_t white;
     uint64_t black;
     uint64_t kings;
@@ -24,7 +24,7 @@ struct board {
 
     int halfmove_clock;
     int fullmove_number;
-};
+} board_t;
 
 void board_clear(struct board *pos);
 void board_reset(struct board *pos);
@@ -39,5 +39,6 @@ bool board_is_insufficient_material(const struct board *pos);
 uint64_t board_attacks_to(const struct board *pos, uint8_t square);
 uint64_t board_attacks_from(const struct board *pos, uint8_t square);
 uint64_t board_checkers(const struct board *pos);
+move_t *board_pseudo_legal_moves(const struct board *pos, move_t *moves, uint64_t from_mask, uint64_t to_mask);
 
 #endif  // #ifndef BOARD_H_
