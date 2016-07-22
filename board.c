@@ -521,15 +521,13 @@ static move_t *make_pawn_moves(const board_t *pos, square_t from, square_t to, m
 }
 
 move_t *board_pseudo_legal_moves(const board_t *pos, move_t *moves, uint64_t from_mask, uint64_t to_mask) {
-    uint64_t we, them, fourth_rank;
+    uint64_t we, them;
     if (pos->turn) {
         we = pos->white;
         them = pos->black;
-        fourth_rank = BB_RANK_4;
     } else {
         we = pos->black;
         them = pos->white;
-        fourth_rank = BB_RANK_5;
     }
 
     // Generate piece moves.
@@ -559,8 +557,14 @@ move_t *board_pseudo_legal_moves(const board_t *pos, move_t *moves, uint64_t fro
     }
 
     // Prepare pawn advance generation.
-    uint64_t single_moves = ((we & pos->pawns & from_mask) << 8) & ~(we | them);
-    uint64_t double_moves = (single_moves << 8) & ~(we | them) & fourth_rank;
+    uint64_t single_moves, double_moves;
+    if (pos->turn) {
+        single_moves = ((we & pos->pawns & from_mask) << 8) & ~(we | them);
+        double_moves = (single_moves << 8) & ~(we | them) & BB_RANK_4;
+    } else {
+        single_moves = ((we & pos->pawns & from_mask) >> 8) & ~(we | them);
+        double_moves = (single_moves >> 8) & ~(we | them) & BB_RANK_5;
+    }
     single_moves &= to_mask;
     double_moves &= to_mask;
 
@@ -568,14 +572,14 @@ move_t *board_pseudo_legal_moves(const board_t *pos, move_t *moves, uint64_t fro
     while (single_moves) {
         square_t to_square = bb_poplsb(&single_moves);
         square_t from_square = to_square + (pos->turn ? -8 : 8);
-        make_pawn_moves(pos, from_square, to_square, moves);
+        moves = make_pawn_moves(pos, from_square, to_square, moves);
     }
 
     // Generate double pawn moves.
     while (double_moves) {
         square_t to_square = bb_poplsb(&double_moves);
         square_t from_square = to_square + (pos->turn ? -16 : 16);
-        make_pawn_moves(pos, from_square, to_square, moves);
+        moves = make_pawn_moves(pos, from_square, to_square, moves);
     }
 
     // Generate en passant captures.
