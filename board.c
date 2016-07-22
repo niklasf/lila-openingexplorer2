@@ -503,10 +503,6 @@ move_t *board_castling_moves(const board_t *pos, move_t *moves, uint64_t from_ma
     return moves;
 }
 
-move_t *board_pseudo_legal_ep(const board_t *pos, move_t *moves, uint64_t from_mask, uint64_t to_mask) {
-    return moves;
-}
-
 static move_t *make_pawn_moves(const board_t *pos, square_t from, square_t to, move_t *moves) {
     int rank = square_rank(to);
     if (rank == 0 || rank == 7) {
@@ -547,9 +543,10 @@ move_t *board_pseudo_legal_moves(const board_t *pos, move_t *moves, uint64_t fro
 
     // Generate pawn captures.
     uint64_t pawns = we & pos->pawns & from_mask;
+    uint64_t ep_mask = pos->ep_square ? BB_SQUARE(pos->ep_square) : BB_VOID;
     while (pawns) {
         square_t from_square = bb_poplsb(&pawns);
-        uint64_t to_squares = attacks_pawn(from_square, pos->turn) & them & to_mask;
+        uint64_t to_squares = attacks_pawn(from_square, pos->turn) & (them | ep_mask) & to_mask;
         while (to_squares) {
             square_t to_square = bb_poplsb(&to_squares);
             moves = make_pawn_moves(pos, from_square, to_square, moves);
@@ -581,9 +578,6 @@ move_t *board_pseudo_legal_moves(const board_t *pos, move_t *moves, uint64_t fro
         square_t from_square = to_square + (pos->turn ? -16 : 16);
         moves = make_pawn_moves(pos, from_square, to_square, moves);
     }
-
-    // Generate en passant captures.
-    moves = board_pseudo_legal_ep(pos, moves, from_mask, to_mask);
 
     return moves;
 }

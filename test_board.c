@@ -134,6 +134,28 @@ void test_board_pseudo_legal_moves() {
     }
 }
 
+void test_board_pseudo_legal_ep() {
+    puts("test_board_pseudo_legal_ep");
+
+    struct board pos;
+    assert(board_set_fen(&pos, "4k3/8/8/8/4Pp2/8/8/4K3 b - e3 0 1"));
+    move_t ep = move_make(SQ_F4, SQ_E3, 0);
+
+    move_t moves[255];
+    move_t *end = board_pseudo_legal_moves(&pos, moves, BB_ALL, BB_ALL);
+
+    bool found = false;
+    for (move_t *current = moves; current < end; current++) {
+        if (*current == ep) found = true;
+
+        char uci[6];
+        move_uci(*current, uci);
+        puts(uci);
+    }
+
+    assert(found);
+}
+
 int main() {
     attacks_init();
 
@@ -146,5 +168,6 @@ int main() {
     test_board_attacks_from();
     test_board_checkers();
     test_board_pseudo_legal_moves();
+    test_board_pseudo_legal_ep();
     return 0;
 }
