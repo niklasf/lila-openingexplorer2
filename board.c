@@ -361,14 +361,47 @@ uint64_t board_castling_rights(const board_t *pos) {
     uint64_t white_castling = castling & BB_RANK_1 & pos->white;
     uint64_t black_castling = castling & BB_RANK_8 & pos->black;
 
-    // TODO: Castling right clean-up for Chess960.
-    white_castling &= BB_A1 | BB_H1;
-    black_castling &= BB_A8 | BB_H8;
+    // Find the kings.
+    uint64_t white_king = pos->white & pos->kings & BB_RANK_1;
+    uint64_t black_king = pos->black & pos->kings & BB_RANK_8;
 
-    if (!(pos->white & pos->kings & BB_E1)) white_castling = 0;
-    if (!(pos->black & pos->kings & BB_E8)) black_castling = 0;
+    // The kings must be on the backrank.
+    if (!white_king) white_castling = 0;
+    if (!black_king) black_castling = 0;
 
-    return white_castling | black_castling;
+    // Kings must be on the same file, giving preference to the e-file
+    // and then to white.
+    if (white_castling && black_castling) {
+        if (square_file(bb_lsb(white_king)) != square_file(bb_lsb(black_king))) {
+            if (square_file(bb_lsb(black_king)) == 4) white_castling = 0;
+            else black_castling = 0;
+        }
+    }
+
+    // There are only two ways of castling, a-side and h-side, and the king
+    // must be between the rooks.
+    uint64_t white_a_side = white_castling & -white_castling;
+    uint64_t white_h_side = white_castling ? (1ULL << bb_msb(white_castling)) : 0;
+    uint64_t black_a_side = black_castling & -black_castling;
+    uint64_t black_h_side = black_castling ? (1ULL << bb_msb(black_castling)) : 0;
+    if (white_a_side && bb_lsb(white_a_side) > bb_lsb(white_king)) white_a_side = 0;
+    if (white_h_side && bb_lsb(white_h_side) < bb_lsb(white_king)) white_h_side = 0;
+    if (black_a_side && bb_lsb(black_a_side) > bb_lsb(black_king)) black_a_side = 0;
+    if (black_h_side && bb_lsb(black_h_side) < bb_lsb(black_king)) black_h_side = 0;
+
+    // Rooks must be on the same file, giving preference to the a or h file
+    // and then to white.
+    if (black_a_side && white_a_side && square_file(bb_lsb(black_a_side)) != square_file(bb_lsb(white_a_side))) {
+        if (black_a_side == BB_A8) white_a_side = 0;
+        else black_a_side = 0;
+    }
+    if (black_h_side && white_h_side && square_file(bb_lsb(black_h_side)) != square_file(bb_lsb(white_h_side))) {
+        if (black_h_side == BB_H8) white_h_side = 0;
+        else black_h_side = 0;
+    }
+
+    // Done.
+    return black_a_side | black_h_side | white_a_side | white_h_side;
 }
 
 move_t *board_castling_moves(const board_t *pos, move_t *moves, uint64_t from_mask, uint64_t to_mask) {
