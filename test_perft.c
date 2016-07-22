@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "attacks.h"
 #include "board.h"
@@ -105,16 +106,36 @@ void test_tricky() {
     assert(perft(&pos, 4) == 3894594);
 }
 
+void test_random_epd() {
+    puts("test_random_epd");
+
+    FILE *file = fopen("perft-random.epd", "r");
+    assert(file >= 0);
+
+    char line[256];
+    board_t pos;
+    while (fgets(line, 128, file)) {
+        char c = line[0];
+        if (!c || c == ' ' || c == '\n' || c == '#') continue;
+        if (c == 'i') {  // id
+            printf("- %s", line);
+        } else if (c == 'e') {  // epd
+            line[strlen(line) - 1] = 0;
+            strcat(line, " 0 1");
+            assert(board_set_fen(&pos, line + 4));
+        } else if (c == 'p') {  // perft
+            unsigned depth;
+            unsigned long p;
+            assert(sscanf(line, "perft %d %lu", &depth, &p) == 2);
+            if (p < 100000) assert(perft(&pos, depth) == p);
+        }
+    }
+}
+
 int main() {
     attacks_init();
 
-    puts("starting pos");
-    board_t pos;
-    board_reset(&pos);
-    for (unsigned depth = 0; depth < 5; depth++) {
-        printf("%d: %d\n", depth, perft(&pos, depth));
-    }
-
+    test_random_epd();
     test_position_4();
     test_tricky();
     return 0;

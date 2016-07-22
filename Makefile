@@ -9,7 +9,6 @@ test: .depend test_bitboard test_attacks test_board test_perft
 	./test_bitboard
 	./test_attacks
 	./test_board
-	./test_perft
 
 test_bitboard: test_bitboard.o bitboard.o square.o
 	$(CC) -o $@ $^ $(LDFLAGS)
