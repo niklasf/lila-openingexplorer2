@@ -8,6 +8,11 @@
 void test_attacks_rook() {
     puts("test_attacks_rook");
     assert(bb_popcount(attacks_rook(SQ_C7, BB_VOID)) == 14);
+    assert(bb_popcount(attacks_rook(SQ_H1, BB_VOID)) == 14);
+
+    uint64_t attacks = attacks_rook(SQ_H1, BB_H2 | BB_E1);
+    bb_print(attacks);
+    assert(bb_popcount(attacks) == 4);
 }
 
 void test_attacks_knight() {
