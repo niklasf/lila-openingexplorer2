@@ -4,4 +4,5 @@ test_bitboard
 test_attacks
 test_board
 test_perft
+test_encode
 .depend
