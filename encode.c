@@ -41,8 +41,6 @@ char *encode_gameid(char *buffer, const char *game_id) {
         else assert(false);
     }
 
-    printf("o: %lu\n", bytes);
-
     *buffer++ = bytes & 255;
     *buffer++ = (bytes >> 8) & 255;
     *buffer++ = (bytes >> 16) & 255;
@@ -56,13 +54,11 @@ char *encode_gameid(char *buffer, const char *game_id) {
 const char *decode_gameid(const char *buffer, char *game_id) {
     uint64_t bytes = 0;
     bytes |= *buffer++;
-    bytes |= *buffer++ << 8;
-    bytes |= *buffer++ << 16;
-    bytes |= *buffer++ << 24;
-    bytes |= *buffer++ << 32;
-    bytes |= *buffer++ << 40;
-
-    printf("i: %lu\n", bytes);
+    bytes |= ((uint64_t) *buffer++) << 8;
+    bytes |= ((uint64_t) *buffer++) << 16;
+    bytes |= ((uint64_t) *buffer++) << 24;
+    bytes |= ((uint64_t) *buffer++) << 32;
+    bytes |= ((uint64_t) *buffer++) << 40;
 
     for (int i = 11; i >= 0; i--) {
         lldiv_t r = lldiv(bytes, 62);

@@ -34,7 +34,7 @@ void test_encode_gameid() {
     printf("- %s %s\n", id_1, decoded);
     assert(strcmp(id_1, decoded) == 0);
 
-    const char *id_2 = "0000000000aa";
+    const char *id_2 = "000000000010";
     encode_gameid(encoded, id_2);
     decode_gameid(encoded, decoded);
     printf("- %s %s\n", id_2, decoded);
