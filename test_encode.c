@@ -37,19 +37,19 @@ void test_encode_gameid() {
     encode_gameid(encoded, id_2);
     decode_gameid(encoded, decoded);
     printf("- %s %s\n", id_2, decoded);
-    assert(strcmp(id_1, decoded) == 0);
+    assert(strcmp(id_2, decoded) == 0);
 
     const char *id_3 = "aaaaaaaaaaaa";
     encode_gameid(encoded, id_3);
     decode_gameid(encoded, decoded);
     printf("- %s %s\n", id_3, decoded);
-    assert(strcmp(id_1, decoded) == 0);
+    assert(strcmp(id_3, decoded) == 0);
 
     const char *id_4 = "AAAAAAAAAAAA";
     encode_gameid(encoded, id_4);
     decode_gameid(encoded, decoded);
     printf("- %s %s\n", id_4, decoded);
-    assert(strcmp(id_1, decoded) == 0);
+    assert(strcmp(id_4, decoded) == 0);
 }
 
 int main() {

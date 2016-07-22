@@ -26,9 +26,20 @@ const char *decode_uint(const char *buffer, unsigned long *value) {
 }
 
 char *encode_gameid(char *buffer, const char *game_id) {
+    for (int i = 0; i < 12; i++) {
+        *buffer++ = game_id[i];
+    }
+
     return buffer;
 }
 
 const char *decode_gameid(const char *buffer, char *game_id) {
+    int i;
+    for (i = 0; i < 12; i++) {
+        game_id[i] = *buffer++;
+    }
+
+    game_id[i] = 0;
+
     return buffer;
 }
