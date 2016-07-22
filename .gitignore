@@ -3,4 +3,5 @@
 test_bitboard
 test_attacks
 test_board
+test_perft
 .depend
