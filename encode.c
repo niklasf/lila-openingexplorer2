@@ -28,11 +28,30 @@ const uint8_t *decode_uint(const uint8_t *buffer, unsigned long *value) {
     return buffer;
 }
 
+uint8_t *encode_uint48(uint8_t *buffer, uint64_t value) {
+    *buffer++ = value & 255;
+    *buffer++ = (value >> 8) & 255;
+    *buffer++ = (value >> 16) & 255;
+    *buffer++ = (value >> 24) & 255;
+    *buffer++ = (value >> 32) & 255;
+    *buffer++ = (value >> 40) & 255;
+    return buffer;
+}
+
+const uint8_t *decode_uint48(const uint8_t *buffer, uint64_t *value) {
+    *value = 0;
+    *value |= ((uint64_t) *buffer++);
+    *value |= ((uint64_t) *buffer++) << 8;
+    *value |= ((uint64_t) *buffer++) << 16;
+    *value |= ((uint64_t) *buffer++) << 24;
+    *value |= ((uint64_t) *buffer++) << 32;
+    *value |= ((uint64_t) *buffer++) << 40;
+    return buffer;
+}
+
 static const char BASE_62[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
 uint8_t *encode_gameid(uint8_t *buffer, const char *game_id) {
-    uint8_t *s = buffer;
-
     uint64_t bytes = 0;
 
     for (int i = 0; i < 8; i++) {
@@ -43,24 +62,12 @@ uint8_t *encode_gameid(uint8_t *buffer, const char *game_id) {
         else assert(false);
     }
 
-    *buffer++ = bytes & 255;
-    *buffer++ = (bytes >> 8) & 255;
-    *buffer++ = (bytes >> 16) & 255;
-    *buffer++ = (bytes >> 24) & 255;
-    *buffer++ = (bytes >> 32) & 255;
-    *buffer++ = (bytes >> 40) & 255;
-
-    return buffer;
+    return encode_uint48(buffer, bytes);
 }
 
 const uint8_t *decode_gameid(const uint8_t *buffer, char *game_id) {
-    uint64_t bytes = 0;
-    bytes |= ((uint64_t) *buffer++);
-    bytes |= ((uint64_t) *buffer++) << 8;
-    bytes |= ((uint64_t) *buffer++) << 16;
-    bytes |= ((uint64_t) *buffer++) << 24;
-    bytes |= ((uint64_t) *buffer++) << 32;
-    bytes |= ((uint64_t) *buffer++) << 40;
+    uint64_t bytes;
+    buffer = decode_uint48(buffer, &bytes);
 
     for (int i = 7; i >= 0; i--) {
         lldiv_t r = lldiv(bytes, 62);

@@ -1,5 +1,5 @@
 CC=clang
-CFLAGS=-Wall -mpopcnt -mbmi2 -std=gnu99
+CFLAGS=-Wall -Werror -mpopcnt -mbmi2 -std=gnu99
 LDFLAGS=
 
 OBJS = encode.o square.o bitboard.o board.o \
