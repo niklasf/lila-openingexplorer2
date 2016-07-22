@@ -23,24 +23,38 @@ unsigned long perft(const board_t *pos, unsigned depth) {
     return result;
 }
 
+unsigned long print_perfts(const board_t *pos, unsigned depth) {
+    move_t moves[255];
+    move_t *end = board_legal_moves(pos, moves, BB_ALL, BB_ALL);
+    unsigned long total = 0;
+
+    for (move_t *current = moves; current < end; current++) {
+        board_t pos_after = *pos;
+        board_move(&pos_after, *current);
+
+        char uci[6];
+        move_uci(*current, uci);
+
+        unsigned long p = perft(&pos_after, depth - 1);
+        printf("%s: %lu\n", uci, p);
+        total += p;
+    }
+
+    printf("total: %lu\n", total);
+    return total;
+}
+
 void test_position_4() {
     puts("test_position_4");
 
     // Position 4 from https://chessprogramming.wikispaces.com/Perft+Results.
     board_t pos;
     board_set_fen(&pos, "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
+    print_perfts(&pos, 3);
 
-    move_t moves[255];
-    move_t *end = board_legal_moves(&pos, moves, BB_ALL, BB_ALL);
-    for (move_t *current = moves; current < end; current++) {
-        board_t pos_after = pos;
-        board_move(&pos_after, *current);
-
-        char uci[6];
-        move_uci(*current, uci);
-
-        printf("%s %d\n", uci, perft(&pos_after, 2));
-    }
+    // The position after f1f2.
+    board_move(&pos, move_make(SQ_F1, SQ_F2, 0));
+    print_perfts(&pos, 2);
 }
 
 void test_tricky() {

@@ -46,13 +46,14 @@ static inline bool move_is_drop(move_t move) {
 }
 
 static inline char move_piece_type(move_t move) {
-    if (move & 7 << 12) {
-        if (move & 1 << 12) return 'p';
-        else if (move & 2 << 12) return 'n';
-        else if (move & 3 << 12) return 'b';
-        else if (move & 4 << 12) return 'r';
-        else if (move & 5 << 12) return 'q';
-        else if (move & 6 << 12) return 'k';
+    uint16_t piece_type = (move >> 12) & 7;
+    if (piece_type) {
+        if (piece_type == 1) return 'p';
+        else if (piece_type == 2) return 'n';
+        else if (piece_type == 3) return 'b';
+        else if (piece_type == 4) return 'r';
+        else if (piece_type == 5) return 'q';
+        else if (piece_type == 6) return 'k';
     }
 
     return 0;
