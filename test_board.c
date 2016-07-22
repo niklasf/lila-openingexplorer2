@@ -4,6 +4,8 @@
 
 #include "board.h"
 #include "bitboard.h"
+#include "square.h"
+#include "attacks.h"
 
 void test_board_clear() {
     puts("test_board_clear");
@@ -77,11 +79,24 @@ void test_board_is_insufficient_material() {
     assert(!board_is_insufficient_material(&pos));
 }
 
+void test_board_attacks_to() {
+    puts("test_board_attacks_to");
+
+    struct board pos;
+    board_reset(&pos);
+    uint64_t attacks = board_attacks_to(&pos, SQ_F6);
+    bb_print(attacks);
+    assert(attacks & BB_G8);
+}
+
 int main() {
+    attacks_init();
+
     test_board_clear();
     test_board_reset();
     test_board_shredder_fen();
     test_board_set_fen();
     test_board_is_insufficient_material();
+    test_board_attacks_to();
     return 0;
 }

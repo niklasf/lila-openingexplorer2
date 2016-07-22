@@ -3,6 +3,7 @@
 #include "board.h"
 #include "bitboard.h"
 #include "square.h"
+#include "attacks.h"
 
 char board_piece_at(const struct board *pos, uint8_t square) {
     uint64_t bb = BB_SQUARE(square);
@@ -312,4 +313,25 @@ bool board_is_insufficient_material(const struct board *pos) {
     else if (!(pos->bishops & BB_DARK_SQUARES)) return true;
     else if (!(pos->bishops & BB_LIGHT_SQUARES)) return true;
     else return false;
+}
+
+uint64_t board_attacks_to(const struct board *pos, uint8_t square) {
+    uint64_t occupied = pos->white | pos->black;
+
+    uint64_t attacks = 0;
+    attacks |= attacks_rook(square, occupied) & (pos->rooks | pos->queens);
+    attacks |= attacks_bishop(square, occupied) & (pos->bishops | pos->queens);
+    attacks |= attacks_knight(square) & pos->knights;
+    attacks |= attacks_king(square) & pos->kings;
+    return attacks;
+}
+
+uint64_t board_attacks_from(const struct board *pos, uint8_t square) {
+    uint64_t bb = BB_SQUARE(square);
+    uint64_t occupied = pos->white | pos->black;
+    if (pos->bishops & bb) return attacks_bishop(square, occupied);
+    else if (pos->rooks & bb) return attacks_rook(square, occupied);
+    else if (pos->queens & bb) return attacks_bishop(square, occupied) | attacks_rook(square, occupied);
+    else if (pos->knights & bb) return attacks_knight(square);
+    else if (pos->kings & bb) return attacks_king(square);
 }
