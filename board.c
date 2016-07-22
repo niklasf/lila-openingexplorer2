@@ -503,13 +503,40 @@ move_t *board_castling_moves(const board_t *pos, move_t *moves, uint64_t from_ma
     return moves;
 }
 
+move_t *board_pseudo_legal_ep(const board_t *pos, move_t *moves, uint64_t from_mask, uint64_t to_mask) {
+    return moves;
+}
+
+static move_t *make_pawn_moves(const board_t *pos, square_t from, square_t to, move_t *moves) {
+    int rank = square_rank(to);
+    if (rank == 0 || rank == 7) {
+        *moves++ = move_make(from, to, 'q');
+        *moves++ = move_make(from, to, 'r');
+        *moves++ = move_make(from, to, 'b');
+        *moves++ = move_make(from, to, 'n');
+    } else {
+        *moves++ = move_make(from, to, 0);
+    }
+    return moves;
+}
+
 move_t *board_pseudo_legal_moves(const board_t *pos, move_t *moves, uint64_t from_mask, uint64_t to_mask) {
+    uint64_t we, them, fourth_rank;
+    if (pos->turn) {
+        we = pos->white;
+        them = pos->black;
+        fourth_rank = BB_RANK_4;
+    } else {
+        we = pos->black;
+        them = pos->white;
+        fourth_rank = BB_RANK_5;
+    }
+
     // Generate piece moves.
-    uint64_t our_pieces = pos->turn ? pos->white : pos->black;
-    uint64_t non_pawns = our_pieces & ~pos->pawns & from_mask;
+    uint64_t non_pawns = we & ~pos->pawns & from_mask;
     while (non_pawns) {
         square_t from_square = bb_poplsb(&non_pawns);
-        uint64_t to_squares = board_attacks_from(pos, from_square) & ~our_pieces & to_mask;
+        uint64_t to_squares = board_attacks_from(pos, from_square) & ~we & to_mask;
         while (to_squares) {
             square_t to_square = bb_poplsb(&to_squares);
             *moves++ = move_make(from_square, to_square, 0);
@@ -520,9 +547,39 @@ move_t *board_pseudo_legal_moves(const board_t *pos, move_t *moves, uint64_t fro
     // Generate castling moves.
     moves = board_castling_moves(pos, moves, from_mask, to_mask);
 
-    // TODO: Generate castling moves.
+    // Generate pawn captures.
+    uint64_t pawns = we & pos->pawns & from_mask;
+    while (pawns) {
+        square_t from_square = bb_poplsb(&pawns);
+        uint64_t to_squares = attacks_pawn(from_square, pos->turn) & them & to_mask;
+        while (to_squares) {
+            square_t to_square = bb_poplsb(&to_squares);
+            moves = make_pawn_moves(pos, from_square, to_square, moves);
+        }
+    }
 
-    // TODO: Generate pawn moves.
+    // Prepare pawn advance generation.
+    uint64_t single_moves = ((we & pos->pawns & from_mask) << 8) & ~(we | them);
+    uint64_t double_moves = (single_moves << 8) & ~(we | them) & fourth_rank;
+    single_moves &= to_mask;
+    double_moves &= to_mask;
+
+    // Generate single pawn moves.
+    while (single_moves) {
+        square_t to_square = bb_poplsb(&single_moves);
+        square_t from_square = to_square + (pos->turn ? -8 : 8);
+        make_pawn_moves(pos, from_square, to_square, moves);
+    }
+
+    // Generate double pawn moves.
+    while (double_moves) {
+        square_t to_square = bb_poplsb(&double_moves);
+        square_t from_square = to_square + (pos->turn ? -16 : 16);
+        make_pawn_moves(pos, from_square, to_square, moves);
+    }
+
+    // Generate en passant captures.
+    moves = board_pseudo_legal_ep(pos, moves, from_mask, to_mask);
 
     return moves;
 }
