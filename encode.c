@@ -55,12 +55,12 @@ uint8_t *encode_gameid(uint8_t *buffer, const char *game_id) {
 
 const uint8_t *decode_gameid(const uint8_t *buffer, char *game_id) {
     uint64_t bytes = 0;
-    bytes |= ((uint64_t) *buffer++ & 255);
-    bytes |= ((uint64_t) *buffer++ & 255) << 8;
-    bytes |= ((uint64_t) *buffer++ & 255) << 16;
-    bytes |= ((uint64_t) *buffer++ & 255) << 24;
-    bytes |= ((uint64_t) *buffer++ & 255) << 32;
-    bytes |= ((uint64_t) *buffer++ & 255) << 40;
+    bytes |= ((uint64_t) *buffer++);
+    bytes |= ((uint64_t) *buffer++) << 8;
+    bytes |= ((uint64_t) *buffer++) << 16;
+    bytes |= ((uint64_t) *buffer++) << 24;
+    bytes |= ((uint64_t) *buffer++) << 32;
+    bytes |= ((uint64_t) *buffer++) << 40;
 
     for (int i = 7; i >= 0; i--) {
         lldiv_t r = lldiv(bytes, 62);
