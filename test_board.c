@@ -170,14 +170,7 @@ void test_board_legal_moves() {
 
     move_t moves[255];
     move_t *end = board_legal_moves(&pos, moves, BB_ALL, BB_ALL);
-    printf("%d\n", (end - moves));
-    // assert((end - moves) == 32);
-
-    for (move_t *current = moves; current < end; current++) {
-        char uci[6];
-        move_uci(*current, uci);
-        puts(uci);
-    }
+    assert((end - moves) == 32);
 }
 
 int main() {
