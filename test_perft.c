@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #include "attacks.h"
 #include "board.h"
 #include "bitboard.h"
@@ -19,6 +21,26 @@ unsigned long perft(const board_t *pos, unsigned depth) {
     }
 
     return result;
+}
+
+void test_position_4() {
+    puts("test_position_4");
+
+    // Position 4 from https://chessprogramming.wikispaces.com/Perft+Results.
+    board_t pos;
+    board_set_fen(&pos, "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
+
+    move_t moves[255];
+    move_t *end = board_legal_moves(&pos, moves, BB_ALL, BB_ALL);
+    for (move_t *current = moves; current < end; current++) {
+        board_t pos_after = pos;
+        board_move(&pos_after, *current);
+
+        char uci[6];
+        move_uci(*current, uci);
+
+        printf("%s %d\n", uci, perft(&pos_after, 2));
+    }
 }
 
 void test_tricky() {
@@ -79,6 +101,7 @@ int main() {
         printf("%d: %d\n", depth, perft(&pos, depth));
     }
 
+    test_position_4();
     test_tricky();
     return 0;
 }
