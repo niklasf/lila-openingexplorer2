@@ -41,5 +41,6 @@ uint64_t board_attacks_to(const struct board *pos, uint8_t square);
 uint64_t board_attacks_from(const struct board *pos, uint8_t square);
 uint64_t board_checkers(const struct board *pos);
 move_t *board_pseudo_legal_moves(const struct board *pos, move_t *moves, uint64_t from_mask, uint64_t to_mask);
+move_t *board_legal_moves(const struct board *pos, move_t *moves, uint64_t from_mask, uint64_t to_mask);
 
 #endif  // #ifndef BOARD_H_

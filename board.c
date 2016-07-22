@@ -23,6 +23,38 @@ char board_piece_at(const struct board *pos, uint8_t square) {
     return 0;
 }
 
+void board_remove_piece_at(struct board *pos, uint8_t square) {
+    uint64_t mask = ~BB_SQUARE(square);
+    pos->white &= mask;
+    pos->black &= mask;
+    pos->kings &= mask;
+    pos->queens &= mask;
+    pos->rooks &= mask;
+    pos->bishops &= mask;
+    pos->knights &= mask;
+    pos->pawns &= mask;
+}
+
+void board_set_piece_at(struct board *pos, uint8_t square, char piece) {
+    board_remove_piece_at(pos, square);
+
+    uint64_t bb = BB_SQUARE(square);
+
+    if (piece >= 'a' && piece <= 'z') pos->black |= bb;
+    else {
+        pos->white |= bb;
+        piece = piece - 'A' + 'a';
+    }
+
+    if (piece == 'k') pos->kings |= bb;
+    else if (piece == 'q') pos->queens |= bb;
+    else if (piece == 'r') pos->rooks |= bb;
+    else if (piece == 'b') pos->bishops |= bb;
+    else if (piece == 'n') pos->knights |= bb;
+    else if (piece == 'p') pos->pawns |= bb;
+    else assert(false);
+}
+
 void board_print(const struct board *pos) {
     for (int rank = 7; rank >= 0; rank--) {
         for (int file = 0; file < 8; file++) {
@@ -577,6 +609,112 @@ move_t *board_pseudo_legal_moves(const board_t *pos, move_t *moves, uint64_t fro
         square_t to_square = bb_poplsb(&double_moves);
         square_t from_square = to_square + (pos->turn ? -16 : 16);
         moves = make_pawn_moves(pos, from_square, to_square, moves);
+    }
+
+    return moves;
+}
+
+void board_move(board_t *pos, move_t move) {
+    uint64_t we, them;
+    if (pos->turn) {
+        we = pos->white;
+        them = pos->black;
+    } else {
+        we = pos->black;
+        them = pos->white;
+    }
+
+    // Increment fullmove number.
+    if (!pos->turn) pos->fullmove_number++;
+
+    // On a null move simply swap turns and reset the en passant square.
+    if (!move) {
+        pos->turn = !pos->turn;
+        pos->halfmove_clock++;
+        pos->ep_square = 0;
+        return;
+    }
+
+    // Update the half move clock.
+    char piece = board_piece_at(pos, move_from(move));
+    if (piece == 'p' || piece == 'P' || BB_SQUARE(move_to(move)) & them) {
+        pos->halfmove_clock = 0;
+    } else {
+        pos->halfmove_clock++;
+    }
+
+    // Update castling rights.
+    pos->castling = board_castling_rights(pos);
+    pos->castling &= ~BB_SQUARE(move_to(move));
+    pos->castling &= ~BB_SQUARE(move_from(move));
+    if (piece == 'K') pos->castling &= ~BB_RANK_1;
+    else if (piece == 'k') pos->castling &= ~BB_RANK_8;
+
+    // Promotion.
+    char promotion = move_piece_type(move);
+    if (promotion && pos->turn) promotion += 'A' - 'a';
+
+    // Remove piece from original square.
+    board_remove_piece_at(pos, move_from(move));
+
+    // Handle special pawn moves.
+    pos->ep_square = 0;
+    int diff = move_to(move) - move_from(move);
+    if (piece == 'P') {
+        // Remove pawns captured en passant.
+        if ((diff == 7 || diff == 9) && !(BB_SQUARE(move_to(move)) & them)) {
+            board_remove_piece_at(pos, move_to(move) - 8);
+        }
+
+        // Set en passant square.
+        if (diff == 16) pos->ep_square = move_to(move) - 8;
+    } else if (piece == 'p') {
+        // Remove pawns captured en passant.
+        if ((diff == -7 || diff == -9) && !(BB_SQUARE(move_to(move)) & them)) {
+            board_remove_piece_at(pos, move_to(move) + 8);
+        }
+
+        // Set en passant square.
+        if (diff == -16) pos->ep_square = move_to(move) + 8;
+    }
+
+    if ((piece == 'k' || piece == 'K') && (BB_SQUARE(move_to(move)) & we)) {
+        // Castling.
+        board_remove_piece_at(pos, move_from(move));
+        board_remove_piece_at(pos, move_to(move));
+
+        bool a_side = square_file(move_to(move)) < square_file(move_from(move));
+        if (a_side) {
+            board_set_piece_at(pos, pos->turn ? SQ_C1 : SQ_C8, piece);
+            board_set_piece_at(pos, pos->turn ? SQ_D1 : SQ_D8, pos->turn ? 'R' : 'r');
+        } else {
+            board_set_piece_at(pos, pos->turn ? SQ_G1 : SQ_G8, piece);
+            board_set_piece_at(pos, pos->turn ? SQ_F1 : SQ_F8, pos->turn ? 'R' : 'r');
+        }
+    } else {
+        // Put piece on target square.
+        board_set_piece_at(pos, move_to(move), piece);
+    }
+
+    // Swap turn.
+    pos->turn = !pos->turn;
+}
+
+move_t *board_legal_moves(const board_t *pos, move_t *moves, uint64_t from_mask, uint64_t to_mask) {
+    board_t test_board;
+
+    move_t *first = moves;
+    move_t *last = board_pseudo_legal_moves(pos, moves, from_mask, to_mask);
+
+    while (first < last) {
+        test_board = *pos;
+        board_move(&test_board, *first);
+
+        if (!board_checkers(&test_board)) {
+            *moves++ = *first;
+        }
+
+        first++;
     }
 
     return moves;
