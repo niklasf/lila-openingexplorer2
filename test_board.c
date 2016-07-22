@@ -104,6 +104,11 @@ void test_board_attacks_from() {
 
     attacks = board_attacks_from(&pos, SQ_D1);
     assert(attacks == (BB_C1 | BB_C2 | BB_D2 | BB_E2 | BB_E1));
+
+    assert(board_set_fen(&pos, "r1bqkbnr/1ppp1ppp/p1n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4"));
+    attacks = board_attacks_from(&pos, SQ_H1);
+    bb_print(attacks);
+    assert(attacks == (BB_E1 | BB_F1 | BB_G1 | BB_H2));
 }
 
 void test_board_checkers() {
@@ -156,6 +161,25 @@ void test_board_pseudo_legal_ep() {
     assert(found);
 }
 
+void test_board_legal_moves() {
+    puts("test_board_legal_moves");
+
+    board_t pos;
+    assert(board_set_fen(&pos, "r1bqkbnr/1ppp1ppp/p1n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4"));
+    board_print(&pos);
+
+    move_t moves[255];
+    move_t *end = board_legal_moves(&pos, moves, BB_ALL, BB_ALL);
+    printf("%d\n", (end - moves));
+    // assert((end - moves) == 32);
+
+    for (move_t *current = moves; current < end; current++) {
+        char uci[6];
+        move_uci(*current, uci);
+        puts(uci);
+    }
+}
+
 int main() {
     attacks_init();
 
@@ -169,5 +193,6 @@ int main() {
     test_board_checkers();
     test_board_pseudo_legal_moves();
     test_board_pseudo_legal_ep();
+    test_board_legal_moves();
     return 0;
 }
