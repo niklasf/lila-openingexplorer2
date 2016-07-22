@@ -323,6 +323,8 @@ uint64_t board_attacks_to(const struct board *pos, uint8_t square) {
     attacks |= attacks_bishop(square, occupied) & (pos->bishops | pos->queens);
     attacks |= attacks_knight(square) & pos->knights;
     attacks |= attacks_king(square) & pos->kings;
+    attacks |= attacks_pawn(square, true) & pos->pawns & pos->black;
+    attacks |= attacks_pawn(square, false) & pos->pawns & pos->white;
     return attacks;
 }
 
@@ -334,4 +336,6 @@ uint64_t board_attacks_from(const struct board *pos, uint8_t square) {
     else if (pos->queens & bb) return attacks_bishop(square, occupied) | attacks_rook(square, occupied);
     else if (pos->knights & bb) return attacks_knight(square);
     else if (pos->kings & bb) return attacks_king(square);
+    else if (pos->pawns & bb) return attacks_pawn(square, (pos->black & bb) == 0);
+    else return 0;
 }

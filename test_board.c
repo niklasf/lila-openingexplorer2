@@ -85,8 +85,7 @@ void test_board_attacks_to() {
     struct board pos;
     board_reset(&pos);
     uint64_t attacks = board_attacks_to(&pos, SQ_F6);
-    bb_print(attacks);
-    assert(attacks & BB_G8);
+    assert(attacks == (BB_G8 | BB_E7 | BB_G7));
 }
 
 int main() {

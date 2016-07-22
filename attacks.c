@@ -24,6 +24,11 @@ static uint64_t KING_ATTACKS[64];
 const static int KNIGHT_DELTAS[] = { 17, 15, 10, 6, -6, -10, -15, -17, 0 };
 static uint64_t KNIGHT_ATTACKS[64];
 
+const static int WHITE_PAWN_DELTAS[] = { 7, 9, 0 };
+const static int BLACK_PAWN_DELTAS[] = { -7, -9, 0 };
+static uint64_t WHITE_PAWN_ATTACKS[64];
+static uint64_t BLACK_PAWN_ATTACKS[64];
+
 static uint64_t attacks_sliding(const int deltas[], uint8_t square, uint64_t occupied) {
     uint64_t attack = 0;
 
@@ -83,6 +88,11 @@ uint64_t attacks_king(uint8_t square) {
     return KING_ATTACKS[square];
 }
 
+uint64_t attacks_pawn(uint8_t square, bool color) {
+    if (color) return WHITE_PAWN_ATTACKS[square];
+    else return BLACK_PAWN_ATTACKS[square];
+}
+
 void attacks_init() {
     attacks_init_magics(ROOK_TABLE, ROOK_ATTACKS,
                         ROOK_MAGICS, ROOK_MASKS, ROOK_SHIFTS,
@@ -95,5 +105,7 @@ void attacks_init() {
     for (uint8_t s = 0; s < 64; s++) {
         KNIGHT_ATTACKS[s] = attacks_sliding(KNIGHT_DELTAS, s, BB_ALL);
         KING_ATTACKS[s] = attacks_sliding(KING_DELTAS, s, BB_ALL);
+        WHITE_PAWN_ATTACKS[s] = attacks_sliding(WHITE_PAWN_DELTAS, s, BB_ALL);
+        BLACK_PAWN_ATTACKS[s] = attacks_sliding(BLACK_PAWN_DELTAS, s, BB_ALL);
     }
 }
