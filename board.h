@@ -37,5 +37,6 @@ void board_print(const struct board *pos);
 bool board_is_insufficient_material(const struct board *pos);
 
 uint64_t board_attacks_to(const struct board *pos, uint8_t square);
+uint64_t board_attacks_from(const struct board *pos, uint8_t square);
 
 #endif  // #ifndef BOARD_H_

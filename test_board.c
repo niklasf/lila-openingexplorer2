@@ -88,6 +88,20 @@ void test_board_attacks_to() {
     assert(attacks == (BB_G8 | BB_E7 | BB_G7));
 }
 
+void test_board_attacks_from() {
+    puts("test_board_attacks_from");
+
+    uint64_t attacks;
+    struct board pos;
+    board_reset(&pos);
+
+    attacks = board_attacks_from(&pos, SQ_B1);
+    assert(attacks == (BB_A3 | BB_C3 | BB_D2));
+
+    attacks = board_attacks_from(&pos, SQ_D1);
+    assert(attacks == (BB_C1 | BB_C2 | BB_D2 | BB_E2 | BB_E1));
+}
+
 int main() {
     attacks_init();
 
@@ -97,5 +111,6 @@ int main() {
     test_board_set_fen();
     test_board_is_insufficient_material();
     test_board_attacks_to();
+    test_board_attacks_from();
     return 0;
 }
