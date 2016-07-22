@@ -38,7 +38,7 @@ static uint64_t attacks_sliding(const int deltas[], uint8_t square, uint64_t occ
              s += deltas[i])
         {
             attack |= BB_SQUARE(s);
-            if (occupied & attack) break;
+            if (occupied & BB_SQUARE(s)) break;
         }
     }
 
