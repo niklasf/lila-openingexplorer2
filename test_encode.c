@@ -71,9 +71,11 @@ void test_master_record() {
 
     uint8_t buffer[255] = {};
 
-    const struct master_ref ref = { "abcdefgh", 1900 };
+    const struct master_ref ref1 = { "abcdefgh", 1900 };
+    const struct master_ref ref2 = { "12345678", 2201 };
     struct master_record *record = master_record_new();
-    master_record_add_move(record, move_make(SQ_D2, SQ_D4, 0), &ref, 1);
+    master_record_add_move(record, move_make(SQ_D2, SQ_D4, 0), &ref1, 1);
+    master_record_add_move(record, move_make(SQ_D2, SQ_D4, 0), &ref2, 1);
     encode_master_record(buffer, record);
     master_record_free(record);
 
