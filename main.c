@@ -55,6 +55,8 @@ void get_master_pgn(struct evhttp_request *req, void *context) {
     evhttp_add_header(headers, "Content-Type", "application/vnd.chess-pgn; charset=utf-8");
 
     evbuffer_add(res, pgn, pgn_size);
+    kcfree(pgn);
+
     evhttp_send_reply(req, HTTP_OK, "OK", res);
     evbuffer_free(res);
 }

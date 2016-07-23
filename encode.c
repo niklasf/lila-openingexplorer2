@@ -79,3 +79,27 @@ const uint8_t *decode_game_id(const uint8_t *buffer, char *game_id) {
 
     return buffer;
 }
+
+struct master_record *master_record_new() {
+    struct master_record *record = malloc(sizeof(struct master_record));
+    if (!record) return NULL;
+
+    record->num_refs = 0;
+    record->num_moves = 0;
+    record->moves = NULL;
+    record->refs = NULL;
+    return record;
+}
+
+void master_record_free(struct master_record *record) {
+    assert(record);
+    if (record->moves) free(record->moves);
+    if (record->refs) free(record->refs);
+    free(record);
+}
+
+uint8_t *master_record_encode(const struct master_record *record, uint8_t *buffer) {
+    buffer = encode_uint(buffer, record->num_refs);
+    buffer = encode_uint(buffer, record->num_moves);
+    return buffer;
+}

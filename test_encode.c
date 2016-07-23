@@ -66,8 +66,24 @@ void test_encode_game_id() {
     assert(strcmp(id_6, decoded) == 0);
 }
 
+void test_master_record() {
+    puts("test_master_record");
+
+    uint8_t buffer[255] = {};
+
+    struct master_record *record = master_record_new();
+    record->num_refs = 10;
+    record->num_moves = 500;
+    master_record_encode(record, buffer);
+    master_record_free(record);
+
+    for (int i = 0; i < 255; i++) printf("%d ", buffer[i]);
+    puts("");
+}
+
 int main() {
     test_encode_uint();
     test_encode_game_id();
+    test_master_record();
     return 0;
 }
