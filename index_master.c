@@ -25,7 +25,7 @@ const char *merge_master_full(const char *hash, size_t hash_size,
     struct master_record *record = master_record_new();
     decode_master_record((const uint8_t *) buf, record);
     master_record_add_move(record, delta->move, &delta->ref, delta->result);
-    master_record_print(record);
+    // master_record_print(record);
 
     char *end = (char *) encode_master_record((uint8_t *) master_entry_buffer, record);
     *sp = end - master_entry_buffer;
@@ -81,6 +81,10 @@ const char *visit_master_pgn(const char *game_id, size_t game_id_size,
         char *token = strtok_r(line, " ", &saveptr_line);
 
         for (; token; token = strtok_r(NULL, " ", &saveptr_line)) {
+            // Skip move numbers.
+            if ('1' <= token[0] && token[0] <= '9') continue;
+
+            // Parse moves.
             move_t move;
             if (board_parse_san(&pos, token, &move)) {
                 uint64_t zobrist_hash = board_zobrist_hash(&pos, POLYGLOT);
@@ -99,6 +103,8 @@ const char *visit_master_pgn(const char *game_id, size_t game_id_size,
                 }
 
                 board_move(&pos, move);
+            } else {
+                printf("illegal token: %s\n", token);
             }
         }
 
