@@ -1,6 +1,6 @@
 CC = clang
 CFLAGS = -Wall -Werror -mpopcnt -mbmi2 -std=gnu99 -fPIE -fstack-protector-all -O3
-LDFLAGS = -Wl,-z,now -Wl,-z,relro -levent
+LDFLAGS = -Wl,-z,now -Wl,-z,relro -levent -lkyotocabinet
 
 OBJS = encode.o square.o bitboard.o board.o pgn.o \
        test_encode.o test_perft.o test_bitboard.o test_attacks.o test_board.o \

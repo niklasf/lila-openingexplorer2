@@ -7,6 +7,10 @@
 #include <event2/buffer.h>
 #include <event2/keyvalq_struct.h>
 
+#include <kclangc.h>
+
+static KCDB *master_pgn_db;
+
 void get_master_pgn(struct evhttp_request *req, void *context) {
     if (evhttp_request_get_command(req) != EVHTTP_REQ_GET) {
         evhttp_send_error(req, HTTP_BADMETHOD, "Method Not Allowed");
@@ -34,9 +38,25 @@ void get_master_pgn(struct evhttp_request *req, void *context) {
         return;
     }
 
-    puts(game_id);
+    size_t pgn_size;
+    char *pgn = kcdbget(master_pgn_db, game_id, 8, &pgn_size);
+    if (!pgn) {
+        evhttp_send_error(req, HTTP_NOTFOUND, "Master PGN Not Found");
+        return;
+    }
 
-    evhttp_send_error(req, HTTP_BADREQUEST, path);
+    struct evbuffer *res = evbuffer_new();
+    if (!res) {
+        puts("could not allocate response buffer");
+        abort();
+    }
+
+    struct evkeyvalq *headers = evhttp_request_get_output_headers(req);
+    evhttp_add_header(headers, "Content-Type", "application/vnd.chess-pgn; charset=utf-8");
+
+    evbuffer_add(res, pgn, pgn_size);
+    evhttp_send_reply(req, HTTP_OK, "OK", res);
+    evbuffer_free(res);
 }
 
 int serve(int port) {
@@ -67,5 +87,18 @@ int serve(int port) {
 }
 
 int main() {
-    return serve(5555);
+    master_pgn_db = kcdbnew();
+    if (!kcdbopen(master_pgn_db, "master-pgn.kct", KCOREADER)) {
+        printf("master_pgn_db open error: %s\n", kcecodename(kcdbecode(master_pgn_db)));
+        return 1;
+    }
+
+    int ret = serve(5555);
+
+    if (!kcdbclose(master_pgn_db)) {
+        printf("master_pgn_db close error: %s\n", kcecodename(kcdbecode(master_pgn_db)));
+    }
+
+    kcdbdel(master_pgn_db);
+    return ret;
 }
