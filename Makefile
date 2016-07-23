@@ -34,7 +34,7 @@ test_board: test_board.o board.o attacks.o bitboard.o move.o square.o
 test_perft: test_perft.o board.o attacks.o bitboard.o move.o square.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
-test_encode: test_encode.o encode.o
+test_encode: test_encode.o encode.o move.o square.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 test_pgn: test_pgn.o pgn.o board.o attacks.o bitboard.o move.o square.o

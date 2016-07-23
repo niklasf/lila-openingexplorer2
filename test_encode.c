@@ -72,15 +72,18 @@ void test_master_record() {
     uint8_t buffer[255] = {};
 
     const struct master_ref ref = { "abcdefgh", 1900 };
-
     struct master_record *record = master_record_new();
     master_record_add_move(record, move_make(SQ_D2, SQ_D4, 0), &ref, 1);
-
-    master_record_encode(record, buffer);
+    encode_master_record(buffer, record);
     master_record_free(record);
 
     for (int i = 0; i < 255; i++) printf("%d ", buffer[i]);
     puts("");
+
+    struct master_record *decoded = master_record_new();
+    decode_master_record(buffer, decoded);
+    master_record_print(decoded);
+    master_record_free(decoded);
 }
 
 int main() {

@@ -2,8 +2,11 @@
 #include <stdint.h>
 #include <assert.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "encode.h"
+#include "move.h"
 
 uint8_t *encode_uint(uint8_t *buffer, unsigned long value) {
     while (value > 127) {
@@ -92,7 +95,7 @@ const uint8_t *decode_game_id(const uint8_t *buffer, char *game_id) {
 
 struct master_record *master_record_new() {
     struct master_record *record = malloc(sizeof(struct master_record));
-    if (!record) return NULL;
+    if (!record) abort();
 
     record->num_refs = 0;
     record->num_moves = 0;
@@ -106,7 +109,7 @@ void master_record_free(struct master_record *record) {
     free(record);
 }
 
-bool master_record_add_move(struct master_record *record,
+void master_record_add_move(struct master_record *record,
                             move_t move, const struct master_ref *ref, int wdl) {
 
     for (size_t i = 0; i < record->num_moves; i++) {
@@ -116,15 +119,13 @@ bool master_record_add_move(struct master_record *record,
             else record->moves[i].black++;
 
             record->moves[i].average_rating_sum += ref->average_rating;
-            return true;
+            return;
         }
     }
 
     struct move_stats *stats =
         realloc(record->moves, sizeof(struct move_stats) * (record->num_moves + 1));
-    if (!stats) {
-        return false;
-    }
+    if (!stats) abort();
 
     stats[record->num_moves].move = move;
     stats[record->num_moves].white = (wdl > 0) ? 1 : 0;
@@ -140,11 +141,9 @@ bool master_record_add_move(struct master_record *record,
     } else {
         // TODO: Replace lowest game.
     }
-
-    return true;
 }
 
-uint8_t *master_record_encode(const struct master_record *record, uint8_t *buffer) {
+uint8_t *encode_master_record(uint8_t *buffer, const struct master_record *record) {
     buffer = encode_uint(buffer, record->num_refs);
     buffer = encode_uint(buffer, record->num_moves);
 
@@ -162,4 +161,60 @@ uint8_t *master_record_encode(const struct master_record *record, uint8_t *buffe
     }
 
     return buffer;
+}
+
+const uint8_t *decode_master_record(const uint8_t *buffer, struct master_record *record) {
+    unsigned long num_refs;
+    buffer = decode_uint(buffer, &num_refs);
+    record->num_refs = num_refs;
+
+    unsigned long num_moves;
+    buffer = decode_uint(buffer, &num_moves);
+    record->num_moves = num_moves;
+
+    record->moves = realloc(record->moves, sizeof(struct move_stats) * record->num_moves);
+    if (!record->moves) abort();
+
+    for (size_t i = 0; i < record->num_moves; i++) {
+        buffer = decode_uint16(buffer, &record->moves[i].move);
+        buffer = decode_uint(buffer, &record->moves[i].white);
+        buffer = decode_uint(buffer, &record->moves[i].draws);
+        buffer = decode_uint(buffer, &record->moves[i].black);
+        buffer = decode_uint(buffer, &record->moves[i].average_rating_sum);
+    }
+
+    for (size_t i = 0; i < record->num_refs; i++) {
+        buffer = decode_game_id(buffer, record->refs[i].game_id);
+
+        unsigned long average_rating;
+        buffer = decode_uint(buffer, &average_rating);
+        record->refs[i].average_rating = average_rating;
+    }
+
+    return buffer;
+}
+
+void master_record_print(const struct master_record *record) {
+    printf("num_moves: %d\n", record->num_moves);
+
+    for (size_t i = 0; i < record->num_moves; i++) {
+        unsigned long total = record->moves[i].white + record->moves[i].draws + record->moves[i].black;
+
+        char uci[LEN_UCI];
+        move_uci(record->moves[i].move, uci);
+        printf("  %s (t: %lu, w: %lu, d: %lu, b: %lu, avg: %lu)\n", uci,
+            total,
+            record->moves[i].white,
+            record->moves[i].draws,
+            record->moves[i].black,
+            record->moves[i].average_rating_sum / total);
+    }
+
+    printf("num_refs: %d\n", record->num_refs);
+
+    for (size_t i = 0; i < record->num_refs; i++) {
+        char c_game_id[9];
+        strncpy(c_game_id, record->refs[i].game_id, 8);
+        printf("  %s (avg: %d)\n", c_game_id, record->refs[i].average_rating);
+    }
 }

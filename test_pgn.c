@@ -10,7 +10,7 @@ void test_pgn_read_game() {
     FILE *file = fopen("molinari-bordais-1979.pgn", "r");
     struct pgn_game_info game_info;
     assert(pgn_read_game(file, &game_info));
-    printf("w: %s, b: %s", game_info.white, game_info.black);
+    // printf("w: %s, b: %s", game_info.white, game_info.black);
 
     fclose(file);
 }
