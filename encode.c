@@ -51,7 +51,7 @@ const uint8_t *decode_uint48(const uint8_t *buffer, uint64_t *value) {
 
 static const char BASE_62[] = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
 
-uint8_t *encode_gameid(uint8_t *buffer, const char *game_id) {
+uint8_t *encode_game_id(uint8_t *buffer, const char *game_id) {
     uint64_t bytes = 0;
 
     for (int i = 0; i < 8; i++) {
@@ -65,7 +65,7 @@ uint8_t *encode_gameid(uint8_t *buffer, const char *game_id) {
     return encode_uint48(buffer, bytes);
 }
 
-const uint8_t *decode_gameid(const uint8_t *buffer, char *game_id) {
+const uint8_t *decode_game_id(const uint8_t *buffer, char *game_id) {
     uint64_t bytes;
     buffer = decode_uint48(buffer, &bytes);
 
