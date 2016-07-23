@@ -733,6 +733,7 @@ bool board_parse_san(const board_t *pos, const char *san, move_t *move) {
 
     // Select piece type.
     uint64_t from_mask;
+    uint64_t to_mask = BB_ALL;
     switch (*san) {
         case 'K':
             from_mask = pos->pawns;
@@ -772,6 +773,11 @@ bool board_parse_san(const board_t *pos, const char *san, move_t *move) {
         san++;
     }
 
+    if (*san == 'x') {
+        to_mask &= (pos->turn ? pos->black : pos->white);
+        san++;
+    }
+
     if (*san >= 'a' && *san <= 'h') {
         to_file = *san++;
 
@@ -786,7 +792,7 @@ bool board_parse_san(const board_t *pos, const char *san, move_t *move) {
     }
 
     if (!to_file || !to_rank) return false;
-    uint64_t to_mask = BB_SQUARE(square(to_file - 'a', to_rank - '1'));
+    to_mask &= BB_SQUARE(square(to_file - 'a', to_rank - '1'));
 
     if (from_file) from_mask &= BB_FILE(from_file - 'a');
     if (from_rank) from_mask &= BB_RANK(from_rank - '1');

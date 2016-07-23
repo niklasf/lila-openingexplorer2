@@ -216,11 +216,14 @@ void test_board_parse_san() {
     puts("test_board_parse_san");
     board_t pos;
     move_t move;
-    board_reset(&pos);
 
+    board_reset(&pos);
     assert(board_parse_san(&pos, "e4", &move));
-    board_move(&pos, move);
-    board_print(&pos);
+    assert(move == move_make(SQ_E2, SQ_E4, 0));
+
+    assert(board_set_fen(&pos, "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/2N2N2/PPPP1PPP/R1BQK2R b KQkq - 5 4"));
+    assert(board_parse_san(&pos, "Nxe4", &move));
+    assert(move == move_make(SQ_F6, SQ_E4, 0));
 }
 
 int main() {
