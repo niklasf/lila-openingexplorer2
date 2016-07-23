@@ -71,9 +71,11 @@ void test_master_record() {
 
     uint8_t buffer[255] = {};
 
+    const struct master_ref ref = { "abcdefgh", 1900 };
+
     struct master_record *record = master_record_new();
-    record->num_refs = 10;
-    record->num_moves = 500;
+    master_record_add_move(record, move_make(SQ_D2, SQ_D4, 0), &ref, 1);
+
     master_record_encode(record, buffer);
     master_record_free(record);
 

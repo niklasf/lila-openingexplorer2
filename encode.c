@@ -98,6 +98,38 @@ void master_record_free(struct master_record *record) {
     free(record);
 }
 
+bool master_record_add_move(struct master_record *record,
+                            move_t move, const struct master_ref *ref, int wdl) {
+
+    for (size_t i = 0; i < record->num_moves; i++) {
+        if (record->moves[i].move == move) {
+            if (wdl > 0) record->moves[i].white++;
+            else if (wdl == 0) record->moves[i].draws++;
+            else record->moves[i].black++;
+
+            record->moves[i].average_rating_sum += ref->average_rating;
+            return true;
+        }
+    }
+
+    struct move_stats *stats =
+        realloc(record->moves, sizeof(struct move_stats) * (record->num_moves + 1));
+    if (!stats) {
+        return false;
+    }
+
+    stats[record->num_moves].move = move;
+    stats[record->num_moves].white = (wdl > 0) ? 1 : 0;
+    stats[record->num_moves].draws = (wdl == 0) ? 1 : 0;
+    stats[record->num_moves].black = (wdl < 0) ? 1 : 0;
+    stats[record->num_moves].average_rating_sum = ref->average_rating;
+
+    record->num_moves++;
+    record->moves = stats;
+
+    return true;
+}
+
 uint8_t *master_record_encode(const struct master_record *record, uint8_t *buffer) {
     buffer = encode_uint(buffer, record->num_refs);
     buffer = encode_uint(buffer, record->num_moves);

@@ -36,6 +36,10 @@ struct master_record {
 };
 
 struct master_record *master_record_new();
+
+bool master_record_add_move(struct master_record *record,
+                            move_t move, const struct master_ref *ref, int wdl);
+
 uint8_t *master_record_encode(const struct master_record *record, uint8_t *buffer);
 void master_record_free(struct master_record *record);
 
