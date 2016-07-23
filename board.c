@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 
 #include "board.h"
 #include "bitboard.h"
@@ -719,6 +720,86 @@ move_t *board_legal_moves(const board_t *pos, move_t *moves, uint64_t from_mask,
     }
 
     return moves;
+}
+
+bool board_parse_san(const board_t *pos, const char *san, move_t *move) {
+    // Null moves.
+    if (strcmp("--", san) == 2) {
+        *move = 0;
+        return true;
+    }
+
+    // TODO: Castling.
+
+    // Select piece type.
+    uint64_t from_mask = pos->pawns;
+    if (*san == 'K') from_mask = pos->kings;
+    else if (*san == 'Q') from_mask = pos->queens;
+    else if (*san == 'R') from_mask = pos->rooks;
+    else if (*san == 'B') from_mask = pos->bishops;
+    else if (*san == 'N') from_mask = pos->knights;
+    san++;
+
+    // Parse squares.
+    char from_file = 0, from_rank = 0, to_file = 0, to_rank = 0;
+
+    if (*san >= 'a' && *san <= 'h') {
+        from_file = *san;
+        san++;
+    }
+
+    if (*san >= '1' && *san <= '9') {
+        from_rank = *san;
+        san++;
+    }
+
+    if (*san >= 'a' && *san <= 'h') {
+        to_file = *san++;
+
+        if (*san >= '1' && *san <= '9') to_rank = *san++;
+        else return false;
+    } else {
+        to_file = from_file;
+        to_rank = from_rank;
+
+        from_file = 0;
+        from_rank = 0;
+    }
+
+    if (!to_file || !to_rank) return false;
+    uint64_t to_mask = BB_SQUARE(square(to_file, to_rank));
+
+    if (from_file) from_mask &= BB_FILE(from_file - 'a');
+    if (from_rank) from_mask &= BB_RANK(from_rank - '1');
+
+    char promotion = 0;
+    if (*san == '=') {
+        san++;
+        if (*san == 'K' || *san == 'k') promotion = 'k';
+        else if (*san == 'Q' || *san == 'q') promotion = 'q';
+        else if (*san == 'R' || *san == 'r') promotion = 'r';
+        else if (*san == 'B' || *san == 'b') promotion = 'b';
+        else if (*san == 'N' || *san == 'n') promotion = 'n';
+        else return false;
+        san++;
+    }
+
+    // Ignore # and + at the end.
+    if (*san == '#') san++;
+    else if (*san == '+') san++;
+    if (*san) return false;
+
+    *move = 0;
+    move_t moves[64];
+    move_t *end = board_legal_moves(pos, moves, from_mask, to_mask);
+    for (move_t *current = moves; current < end; current++) {
+        if (move_piece_type(*current) == promotion) {
+            if (*move) return false;
+            else *move = *current;
+        }
+    }
+
+    return *move != 0;
 }
 
 uint64_t board_zobrist_hash(const board_t *pos, const uint64_t array[]) {

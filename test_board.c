@@ -212,6 +212,17 @@ void test_board_zobrist_hash() {
     assert(board_zobrist_hash(&pos, POLYGLOT) == 0x652a607ca3f242c1ULL);
 }
 
+void test_board_parse_san() {
+    puts("test_board_parse_san");
+    board_t pos;
+    move_t move;
+    board_reset(&pos);
+
+    assert(board_parse_san(&pos, "e4", &move));
+    board_move(&pos, move);
+    board_print(&pos);
+}
+
 int main() {
     attacks_init();
 
@@ -228,5 +239,6 @@ int main() {
     test_board_legal_moves();
     test_legal_promotion();
     test_board_zobrist_hash();
+    test_board_parse_san();
     return 0;
 }

@@ -44,6 +44,7 @@ void board_move(board_t *pos, move_t move);
 move_t *board_pseudo_legal_moves(const struct board *pos, move_t *moves, uint64_t from_mask, uint64_t to_mask);
 move_t *board_legal_moves(const struct board *pos, move_t *moves, uint64_t from_mask, uint64_t to_mask);
 uint64_t board_zobrist_hash(const struct board *pos, const uint64_t array[]);
+bool board_parse_san(const struct board *pos, const char *san, move_t *move);
 
 extern const uint64_t POLYGLOT[];
 
