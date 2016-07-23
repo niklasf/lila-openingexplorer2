@@ -198,6 +198,20 @@ void test_legal_promotion() {
     assert(found_uci);
 }
 
+void test_board_zobrist_hash() {
+    puts("test_board_zobrist_hash");
+    board_t pos;
+
+    board_reset(&pos);
+    assert(board_zobrist_hash(&pos, POLYGLOT) == 0x463b96181691fc9cULL);
+
+    assert(board_set_fen(&pos, "rnbqkbnr/pppppppp/8/8/4P3/8/PPPP1PPP/RNBQKBNR b KQkq - 0 1"));
+    assert(board_zobrist_hash(&pos, POLYGLOT) == 0x823c9b50fd114196ULL);
+
+    assert(board_set_fen(&pos, "rnbqkbnr/ppp1p1pp/8/3pPp2/8/8/PPPPKPPP/RNBQ1BNR b kq - 1 3"));
+    assert(board_zobrist_hash(&pos, POLYGLOT) == 0x652a607ca3f242c1ULL);
+}
+
 int main() {
     attacks_init();
 
@@ -213,5 +227,6 @@ int main() {
     test_board_pseudo_legal_ep();
     test_board_legal_moves();
     test_legal_promotion();
+    test_board_zobrist_hash();
     return 0;
 }
