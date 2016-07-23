@@ -732,13 +732,32 @@ bool board_parse_san(const board_t *pos, const char *san, move_t *move) {
     // TODO: Castling.
 
     // Select piece type.
-    uint64_t from_mask = pos->pawns;
-    if (*san == 'K') from_mask = pos->kings;
-    else if (*san == 'Q') from_mask = pos->queens;
-    else if (*san == 'R') from_mask = pos->rooks;
-    else if (*san == 'B') from_mask = pos->bishops;
-    else if (*san == 'N') from_mask = pos->knights;
-    san++;
+    uint64_t from_mask;
+    switch (*san) {
+        case 'K':
+            from_mask = pos->pawns;
+            san++;
+            break;
+        case 'Q':
+            from_mask = pos->queens;
+            san++;
+            break;
+        case 'R':
+            from_mask = pos->rooks;
+            san++;
+            break;
+        case 'B':
+            from_mask = pos->bishops;
+            san++;
+            break;
+        case 'N':
+            from_mask = pos->knights;
+            san++;
+            break;
+        default:
+            from_mask = pos->pawns;
+            break;
+    }
 
     // Parse squares.
     char from_file = 0, from_rank = 0, to_file = 0, to_rank = 0;
@@ -767,7 +786,7 @@ bool board_parse_san(const board_t *pos, const char *san, move_t *move) {
     }
 
     if (!to_file || !to_rank) return false;
-    uint64_t to_mask = BB_SQUARE(square(to_file, to_rank));
+    uint64_t to_mask = BB_SQUARE(square(to_file - 'a', to_rank - '1'));
 
     if (from_file) from_mask &= BB_FILE(from_file - 'a');
     if (from_rank) from_mask &= BB_RANK(from_rank - '1');
