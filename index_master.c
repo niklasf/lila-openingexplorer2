@@ -29,6 +29,8 @@ const char *merge_master_full(const char *hash, size_t hash_size,
 
     char *end = (char *) encode_master_record((uint8_t *) master_entry_buffer, record);
     *sp = end - master_entry_buffer;
+    master_record_free(record);
+
     return master_entry_buffer;
 }
 
@@ -42,6 +44,8 @@ const char *merge_master_empty(const char *hash, size_t hash_size,
 
     char *end = (char *) encode_master_record((uint8_t *) master_entry_buffer, record);
     *sp = end - master_entry_buffer;
+    master_record_free(record);
+
     return master_entry_buffer;
 }
 
