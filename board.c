@@ -788,7 +788,9 @@ bool board_parse_san(const board_t *pos, const char *san, move_t *move) {
     }
 
     if (*san == 'x') {
-        to_mask &= (pos->turn ? pos->black : pos->white);
+        uint64_t captures = pos->turn ? pos->black : pos->white;
+        if (pos->ep_square) captures |= BB_SQUARE(pos->ep_square);
+        to_mask &= captures;
         san++;
     }
 
