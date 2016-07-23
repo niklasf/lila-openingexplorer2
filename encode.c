@@ -28,6 +28,16 @@ const uint8_t *decode_uint(const uint8_t *buffer, unsigned long *value) {
     return buffer;
 }
 
+uint8_t *encode_uint16(uint8_t *buffer, uint16_t value) {
+    *((uint16_t *) buffer) = value;
+    return buffer + 2;
+}
+
+const uint8_t *decode_uint16(const uint8_t *buffer, uint16_t *value) {
+    *value = *((uint16_t *) buffer);
+    return buffer + 2;
+}
+
 uint8_t *encode_uint48(uint8_t *buffer, uint64_t value) {
     *buffer++ = value & 255;
     *buffer++ = (value >> 8) & 255;
@@ -133,5 +143,14 @@ bool master_record_add_move(struct master_record *record,
 uint8_t *master_record_encode(const struct master_record *record, uint8_t *buffer) {
     buffer = encode_uint(buffer, record->num_refs);
     buffer = encode_uint(buffer, record->num_moves);
+
+    for (size_t i = 0; i < record->num_moves; i++) {
+        buffer = encode_uint16(buffer, record->moves[i].move);
+        buffer = encode_uint(buffer, record->moves[i].white);
+        buffer = encode_uint(buffer, record->moves[i].draws);
+        buffer = encode_uint(buffer, record->moves[i].black);
+        buffer = encode_uint(buffer, record->moves[i].average_rating_sum);
+    }
+
     return buffer;
 }
