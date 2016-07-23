@@ -112,6 +112,12 @@ void master_record_free(struct master_record *record) {
 void master_record_add_move(struct master_record *record,
                             move_t move, const struct master_ref *ref, int wdl) {
 
+    if (record->num_refs < MASTER_MAX_REFS) {
+        record->refs[record->num_refs++] = *ref;
+    } else {
+        // TODO: Replace lowest game.
+    }
+
     for (size_t i = 0; i < record->num_moves; i++) {
         if (record->moves[i].move == move) {
             if (wdl > 0) record->moves[i].white++;
@@ -135,12 +141,6 @@ void master_record_add_move(struct master_record *record,
 
     record->num_moves++;
     record->moves = stats;
-
-    if (record->num_refs < MASTER_MAX_REFS) {
-        record->refs[record->num_refs++] = *ref;
-    } else {
-        // TODO: Replace lowest game.
-    }
 }
 
 uint8_t *encode_master_record(uint8_t *buffer, const struct master_record *record) {
