@@ -2,6 +2,9 @@
 
 #include <kclangc.h>
 
+#include "attacks.h"
+#include "board.h"
+
 const char *visit_master_pgn(const char *game_id, size_t game_id_size,
                              const char *buf, size_t buf_size,
                              size_t *sp, void *opq) {
@@ -25,12 +28,21 @@ const char *visit_master_pgn(const char *game_id, size_t game_id_size,
     assert(white_elo > 0);
     assert(black_elo > 0);
 
+    board_t pos;
+    board_reset(&pos);
+
     // Parse movetext.
     while (line) {
         char *token = strtok_r(line, " ", &saveptr_line);
-        while (token) {
-            printf("  -> %s <-\n", token);
-            token = strtok_r(NULL, " ", &saveptr_line);
+
+        for (; token; token = strtok_r(NULL, " ", &saveptr_line)) {
+            board_print(&pos);
+            puts("--");
+
+            move_t move;
+            if (board_parse_san(&pos, token, &move)) {
+                board_move(&pos, move);
+            }
         }
 
         line = strtok_r(NULL, "\n", &saveptr_pgn);
@@ -42,6 +54,8 @@ const char *visit_master_pgn(const char *game_id, size_t game_id_size,
 }
 
 int main() {
+    attacks_init();
+
     KCDB *master_pgn_db = kcdbnew();
     if (!kcdbopen(master_pgn_db, "master-pgn.kct", KCOREADER)) {
         printf("master-pgn.kct open error: %s\n", kcecodename(kcdbecode(master_pgn_db)));
