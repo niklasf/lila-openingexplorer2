@@ -5,4 +5,6 @@ test_attacks
 test_board
 test_perft
 test_encode
+test_pgn
+explorer
 .depend
