@@ -750,7 +750,7 @@ bool board_parse_san(const board_t *pos, const char *san, move_t *move) {
     uint64_t to_mask = BB_ALL;
     switch (*san) {
         case 'K':
-            from_mask = pos->pawns;
+            from_mask = pos->kings;
             san++;
             break;
         case 'Q':
