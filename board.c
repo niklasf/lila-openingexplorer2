@@ -6,7 +6,6 @@
 #include "square.h"
 #include "attacks.h"
 
-
 char board_piece_at(const struct board *pos, uint8_t square) {
     uint64_t bb = BB_SQUARE(square);
 
@@ -727,6 +726,21 @@ bool board_parse_san(const board_t *pos, const char *san, move_t *move) {
     if (strcmp("--", san) == 2) {
         *move = 0;
         return true;
+    }
+
+    // TODO: Chess960 support and validation.
+    if (*san == 'O') {
+        if (strcmp("O-O", san) == 0 || strcmp("O-O+", san) == 0 || strcmp("O-O#", san) == 0) {
+            // Kingside castling.
+            *move = pos->turn ? move_make(SQ_E1, SQ_H1, 0) : move_make(SQ_E8, SQ_H8, 0);
+            return true;
+        } else if (strcmp("O-O-O", san) == 0 || strcmp("O-O-O+", san) == 0 || strcmp("O-O-O#", san) == 0) {
+            // Queenside castling.
+            *move = pos->turn ? move_make(SQ_E1, SQ_A1, 0) : move_make(SQ_E8, SQ_A8, 0);
+            return true;
+        } else {
+            return false;
+        }
     }
 
     // TODO: Castling.
