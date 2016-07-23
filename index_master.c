@@ -3,14 +3,32 @@
 #include <kclangc.h>
 
 const char *visit_master_pgn(const char *game_id, size_t game_id_size,
-                             const char *pgn, size_t pgn_size,
+                             const char *buf, size_t buf_size,
                              size_t *sp, void *opq) {
-    assert(game_id_size == 8);
+    char *pgn = strndup(buf, buf_size);
+    char *saveptr_pgn, *saveptr_line;
 
-    char c_game_id[9];
-    strncpy(c_game_id, game_id, 8);
+    char *line = strtok_r(pgn, "\n", &saveptr_pgn);
 
-    printf("%s\n", c_game_id);
+    // Parse headers.
+    while (line && line[0] == '[') {
+        printf("%s\n", line);
+        line = strtok_r(NULL, "\n", &saveptr_pgn);
+    }
+
+    // Parse movetext.
+    while (line) {
+        char *token = strtok_r(line, " ", &saveptr_line);
+        while (token) {
+            printf("  -> %s <-\n", token);
+            token = strtok_r(NULL, " ", &saveptr_line);
+        }
+
+        line = strtok_r(NULL, "\n", &saveptr_pgn);
+    }
+
+    free(pgn);
+    abort();
     return KCVISNOP;
 }
 
