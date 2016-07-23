@@ -6,9 +6,12 @@ OBJS = encode.o square.o bitboard.o board.o pgn.o \
        test_encode.o test_perft.o test_bitboard.o test_attacks.o test_board.o \
        test_pgn.o
 
-all: explorer test_bitboard test_attacks test_board test_perft test_encode test_pgn
+all: explorer index_master test_bitboard test_attacks test_board test_perft test_encode test_pgn
 
 explorer: main.o encode.o pgn.o attacks.o board.o bitboard.o move.o square.o
+	$(CC) -o $@ $^ $(LDFLAGS)
+
+index_master: index_master.o encode.o pgn.o attacks.o board.o bitboard.o move.o square.o
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 .PHONY: test

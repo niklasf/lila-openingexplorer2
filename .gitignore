@@ -7,4 +7,5 @@ test_perft
 test_encode
 test_pgn
 explorer
+index_master
 .depend

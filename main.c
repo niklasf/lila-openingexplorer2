@@ -89,14 +89,14 @@ int serve(int port) {
 int main() {
     master_pgn_db = kcdbnew();
     if (!kcdbopen(master_pgn_db, "master-pgn.kct", KCOREADER)) {
-        printf("master_pgn_db open error: %s\n", kcecodename(kcdbecode(master_pgn_db)));
+        printf("master-pgn.kct open error: %s\n", kcecodename(kcdbecode(master_pgn_db)));
         return 1;
     }
 
     int ret = serve(5555);
 
     if (!kcdbclose(master_pgn_db)) {
-        printf("master_pgn_db close error: %s\n", kcecodename(kcdbecode(master_pgn_db)));
+        printf("master-pgn.kct close error: %s\n", kcecodename(kcdbecode(master_pgn_db)));
     }
 
     kcdbdel(master_pgn_db);
