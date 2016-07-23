@@ -27,12 +27,15 @@ struct master_ref {
     unsigned average_rating;
 };
 
+static const size_t MASTER_MAX_REFS = 4;
+
 struct master_record {
     unsigned num_moves;
     unsigned num_refs;
 
     struct move_stats *moves;
-    struct master_ref *refs;
+
+    struct master_ref refs[MASTER_MAX_REFS];
 };
 
 struct master_record *master_record_new();

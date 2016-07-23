@@ -97,14 +97,12 @@ struct master_record *master_record_new() {
     record->num_refs = 0;
     record->num_moves = 0;
     record->moves = NULL;
-    record->refs = NULL;
     return record;
 }
 
 void master_record_free(struct master_record *record) {
     assert(record);
     if (record->moves) free(record->moves);
-    if (record->refs) free(record->refs);
     free(record);
 }
 
@@ -137,6 +135,12 @@ bool master_record_add_move(struct master_record *record,
     record->num_moves++;
     record->moves = stats;
 
+    if (record->num_refs < MASTER_MAX_REFS) {
+        record->refs[record->num_refs++] = *ref;
+    } else {
+        // TODO: Replace lowest game.
+    }
+
     return true;
 }
 
@@ -150,6 +154,11 @@ uint8_t *master_record_encode(const struct master_record *record, uint8_t *buffe
         buffer = encode_uint(buffer, record->moves[i].draws);
         buffer = encode_uint(buffer, record->moves[i].black);
         buffer = encode_uint(buffer, record->moves[i].average_rating_sum);
+    }
+
+    for (size_t i = 0; i < record->num_refs; i++) {
+        buffer = encode_game_id(buffer, record->refs[i].game_id);
+        buffer = encode_uint(buffer, record->refs[i].average_rating);
     }
 
     return buffer;
