@@ -4,6 +4,47 @@
 
 #include "attacks.h"
 #include "board.h"
+#include "encode.h"
+
+static char master_entry_buffer[8000] = {};
+
+static KCDB *master_db;
+
+struct master_delta {
+    move_t move;
+    struct master_ref ref;
+    int result;
+};
+
+const char *merge_master_full(const char *hash, size_t hash_size,
+                              const char *buf, size_t buf_size,
+                              size_t *sp, void *opq) {
+
+    const struct master_delta *delta = (struct master_delta *) opq;
+
+    struct master_record *record = master_record_new();
+    decode_master_record((const uint8_t *) buf, record);
+    master_record_add_move(record, delta->move, &delta->ref, delta->result);
+    master_record_print(record);
+
+    char *end = (char *) encode_master_record((uint8_t *) master_entry_buffer, record);
+    *sp = end - master_entry_buffer;
+    return master_entry_buffer;
+}
+
+const char *merge_master_empty(const char *hash, size_t hash_size,
+                               size_t *sp, void *opq) {
+
+    const struct master_delta *delta = (struct master_delta *) opq;
+
+    struct master_record *record = master_record_new();
+    master_record_add_move(record, delta->move, &delta->ref, delta->result);
+
+    char *end = (char *) encode_master_record((uint8_t *) master_entry_buffer, record);
+    *sp = end - master_entry_buffer;
+    return master_entry_buffer;
+}
+
 
 const char *visit_master_pgn(const char *game_id, size_t game_id_size,
                              const char *buf, size_t buf_size,
@@ -36,11 +77,23 @@ const char *visit_master_pgn(const char *game_id, size_t game_id_size,
         char *token = strtok_r(line, " ", &saveptr_line);
 
         for (; token; token = strtok_r(NULL, " ", &saveptr_line)) {
-            board_print(&pos);
-            puts("--");
-
             move_t move;
             if (board_parse_san(&pos, token, &move)) {
+                uint64_t zobrist_hash = board_zobrist_hash(&pos, POLYGLOT);
+
+                struct master_delta delta;
+                delta.move = move;
+                strncpy(delta.ref.game_id, game_id, 8);
+                delta.ref.average_rating = (white_elo + black_elo) / 2;
+                delta.result = result;
+
+                if (!kcdbaccept(master_db, (char *) &zobrist_hash, sizeof(uint64_t),
+                                merge_master_full, merge_master_empty,
+                                &delta, true)) {
+                    printf("master.kch accept error: %s\n", kcecodename(kcdbecode(master_db)));
+                    abort();
+                }
+
                 board_move(&pos, move);
             }
         }
@@ -49,7 +102,6 @@ const char *visit_master_pgn(const char *game_id, size_t game_id_size,
     }
 
     free(pgn);
-    abort();
     return KCVISNOP;
 }
 
@@ -59,6 +111,12 @@ int main() {
     KCDB *master_pgn_db = kcdbnew();
     if (!kcdbopen(master_pgn_db, "master-pgn.kct", KCOREADER)) {
         printf("master-pgn.kct open error: %s\n", kcecodename(kcdbecode(master_pgn_db)));
+        return 1;
+    }
+
+    master_db = kcdbnew();
+    if (!kcdbopen(master_db, "master.kch", KCOCREATE | KCOWRITER | KCOREADER)) {
+        printf("master.kch open error: %s\n", kcecodename(kcdbecode(master_db)));
         return 1;
     }
 
