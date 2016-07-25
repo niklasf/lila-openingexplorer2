@@ -53,8 +53,6 @@ const char *merge_master_empty(const char *hash, size_t hash_size,
 const char *visit_master_pgn(const char *game_id, size_t game_id_size,
                              const char *buf, size_t buf_size,
                              size_t *sp, void *opq) {
-    puts("---");
-
     char *pgn = strndup(buf, buf_size);
     char *saveptr_pgn, *saveptr_line;
 
@@ -82,7 +80,7 @@ const char *visit_master_pgn(const char *game_id, size_t game_id_size,
     while (line) {
         char *token = strtok_r(line, " ", &saveptr_line);
 
-        for (; token; token = strtok_r(NULL, " ", &saveptr_line)) {
+        for (; token && pos.fullmove_number <= 25; token = strtok_r(NULL, " ", &saveptr_line)) {
             // Skip move numbers and game results.
             if ('0' <= token[0] && token[0] <= '9') continue;
 
