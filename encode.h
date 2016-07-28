@@ -47,5 +47,6 @@ uint8_t *encode_master_record(uint8_t *buffer, const struct master_record *recor
 const uint8_t *decode_master_record(const uint8_t *buffer, struct master_record *record);
 void master_record_print(const struct master_record *record);
 void master_record_free(struct master_record *record);
+void master_record_sort(struct master_record *record);
 
 #endif  // #ifndef ENCODE_H_

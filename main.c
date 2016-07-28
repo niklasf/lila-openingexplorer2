@@ -121,6 +121,7 @@ void get_master(struct evhttp_request *req, void *context) {
 
     struct master_record *record = master_record_new();
     decode_master_record((const uint8_t *) encoded_record, record);
+    master_record_sort(record);
 
     evbuffer_add_printf(res, "{\n");
     evbuffer_add_printf(res, "  moves: [\n");

@@ -218,3 +218,17 @@ void master_record_print(const struct master_record *record) {
         printf("  %s (avg: %d)\n", c_game_id, record->refs[i].average_rating);
     }
 }
+
+static int cmp_move_stats(const void *l, const void *r) {
+    const struct move_stats *a = (struct move_stats *) l;
+    const struct move_stats *b = (struct move_stats *) r;
+    unsigned long a_total = a->white + a->draws + a->black;
+    unsigned long b_total = b->white + b->draws + b->black;
+    if (a_total < b_total) return 1;
+    else if (a_total > b_total) return -1;
+    else return 0;
+}
+
+void master_record_sort(struct master_record *record) {
+    qsort(record->moves, record->num_moves, sizeof(struct move_stats), cmp_move_stats);
+}
