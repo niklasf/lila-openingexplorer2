@@ -232,3 +232,35 @@ static int cmp_move_stats(const void *l, const void *r) {
 void master_record_sort(struct master_record *record) {
     qsort(record->moves, record->num_moves, sizeof(struct move_stats), cmp_move_stats);
 }
+
+unsigned long master_record_white(const struct master_record *record) {
+    unsigned total = 0;
+    for (size_t i = 0; i < record->num_moves; i++) {
+        total += record->moves[i].white;
+    }
+    return total;
+}
+
+unsigned long master_record_draws(const struct master_record *record) {
+    unsigned total = 0;
+    for (size_t i = 0; i < record->num_moves; i++) {
+        total += record->moves[i].draws;
+    }
+    return total;
+}
+
+unsigned long master_record_black(const struct master_record *record) {
+    unsigned total = 0;
+    for (size_t i = 0; i < record->num_moves; i++) {
+        total += record->moves[i].black;
+    }
+    return total;
+}
+
+unsigned long master_record_average_rating_sum(const struct master_record *record) {
+    unsigned total = 0;
+    for (size_t i = 0; i < record->num_moves; i++) {
+        total += record->moves[i].average_rating_sum;
+    }
+    return total;
+}

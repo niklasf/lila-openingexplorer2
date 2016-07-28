@@ -48,5 +48,9 @@ const uint8_t *decode_master_record(const uint8_t *buffer, struct master_record 
 void master_record_print(const struct master_record *record);
 void master_record_free(struct master_record *record);
 void master_record_sort(struct master_record *record);
+unsigned long master_record_white(const struct master_record *record);
+unsigned long master_record_draws(const struct master_record *record);
+unsigned long master_record_black(const struct master_record *record);
+unsigned long master_record_average_rating_sum(const struct master_record *record);
 
 #endif  // #ifndef ENCODE_H_

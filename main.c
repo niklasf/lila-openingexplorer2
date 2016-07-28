@@ -81,9 +81,19 @@ void get_master(struct evhttp_request *req, void *context) {
     struct evkeyvalq query;
     const char *fen = NULL;
     const char *jsonp = NULL;
+    int moves = 12;
+    int topGames = 4;
     if (0 == evhttp_parse_query(uri, &query)) {
         fen = evhttp_find_header(&query, "fen");
         jsonp = evhttp_find_header(&query, "callback");
+
+        if (evhttp_find_header(&query, "moves")) {
+            moves = atoi(evhttp_find_header(&query, "moves"));
+        }
+
+        if (evhttp_find_header(&query, "topGames")) {
+            topGames = atoi(evhttp_find_header(&query, "topGames"));
+        }
     }
     if (!fen || !strlen(fen)) {
         evhttp_send_error(req, HTTP_BADREQUEST, "Missing FEN");
@@ -125,16 +135,23 @@ void get_master(struct evhttp_request *req, void *context) {
     decode_master_record((const uint8_t *) encoded_record, record);
     master_record_sort(record);
 
-    unsigned long average_rating_sum = 0;
-    unsigned long total = 0;
-    unsigned long total_white = 0;
-    unsigned long total_draws = 0;
-    unsigned long total_black = 0;
+    unsigned long average_rating_sum = master_record_average_rating_sum(record);
+    unsigned long total_white = master_record_white(record);
+    unsigned long total_draws = master_record_draws(record);
+    unsigned long total_black = master_record_black(record);
+    unsigned long total = total_white + total_draws + total_black;
+
+    evbuffer_add_printf(res, "{\n");
+
+    // Add totals.
+    evbuffer_add_printf(res, "  \"white\": %lu,\n", total_white);
+    evbuffer_add_printf(res, "  \"draws\": %lu,\n", total_draws);
+    evbuffer_add_printf(res, "  \"black\": %lu,\n", total_black);
+    evbuffer_add_printf(res, "  \"averageRating\": %lu,\n", average_rating_sum / total);
 
     // Add move list.
-    evbuffer_add_printf(res, "{\n");
-    evbuffer_add_printf(res, "  moves: [\n");
-    for (size_t i = 0; i < record->num_moves; i++) {
+    evbuffer_add_printf(res, "  \"moves\": [\n");
+    for (size_t i = 0; i < record->num_moves && i < moves; i++) {
         unsigned long move_total = record->moves[i].white + record->moves[i].draws + record->moves[i].black;
         total += move_total;
         total_white += record->moves[i].white;
@@ -156,12 +173,6 @@ void get_master(struct evhttp_request *req, void *context) {
     }
 
     evbuffer_add_printf(res, "  ],\n");
-
-    // Add totals.
-    evbuffer_add_printf(res, "  \"white\": %lu,\n", total_white);
-    evbuffer_add_printf(res, "  \"draws\": %lu,\n", total_draws);
-    evbuffer_add_printf(res, "  \"black\": %lu,\n", total_black);
-    evbuffer_add_printf(res, "  \"averageRating\": %lu,\n", average_rating_sum / total);
 
     // Add top games.
     evbuffer_add_printf(res, "  \"topGames\": [\n");
