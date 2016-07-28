@@ -6,22 +6,36 @@
 #include "square.h"
 #include "attacks.h"
 
+uint64_t board_pieces(const struct board *pos, char piece_type, bool color) {
+    uint64_t pieces = 0;
+    if (piece_type == 'p') pieces = pos->pawns;
+    else if (piece_type == 'n') pieces = pos->knights;
+    else if (piece_type == 'b') pieces = pos->bishops;
+    else if (piece_type == 'r') pieces = pos->rooks;
+    else if (piece_type == 'q') pieces = pos->queens;
+    else if (piece_type == 'k') pieces = pos->kings;
+
+    return (color ? pos->white : pos->black) & pieces;
+}
+
+char board_piece_type_at(const struct board *pos, uint8_t square) {
+    uint64_t bb = BB_SQUARE(square);
+
+    if (pos->pawns & bb) return 'p';
+    else if (pos->knights & bb) return 'n';
+    else if (pos->bishops & bb) return 'b';
+    else if (pos->rooks & bb) return 'r';
+    else if (pos->queens & bb) return 'q';
+    else if (pos->kings & bb) return 'k';
+    else return 0;
+}
+
 char board_piece_at(const struct board *pos, uint8_t square) {
     uint64_t bb = BB_SQUARE(square);
 
-    bool white = pos->white & bb;
-    bool black = pos->black & bb;
-
-    if (white || black) {
-        if (pos->kings & bb) return white ? 'K' : 'k';
-        else if (pos->queens & bb) return white ? 'Q' : 'q';
-        else if (pos->rooks & bb) return white ? 'R' : 'r';
-        else if (pos->bishops & bb) return white ? 'B' : 'b';
-        else if (pos->knights & bb) return white ? 'N' : 'n';
-        else if (pos->pawns & bb) return white ? 'P' : 'p';
-    }
-
-    return 0;
+    if (pos->black & bb) return board_piece_type_at(pos, square);
+    else if (pos->white & bb) return board_piece_type_at(pos, square) - 'a' + 'A';
+    else return 0;
 }
 
 void board_remove_piece_at(struct board *pos, uint8_t square) {
@@ -390,7 +404,7 @@ uint64_t board_checkers(const struct board *pos, bool turn) {
 }
 
 bool board_is_checkmate(const struct board *pos) {
-    if (!board_checkers(pos)) return false;
+    if (!board_checkers(pos, pos->turn)) return false;
 
     move_t moves[255];
     move_t *end = board_legal_moves(pos, moves, BB_ALL, BB_ALL);
@@ -849,6 +863,87 @@ bool board_parse_san(const board_t *pos, const char *san, move_t *move) {
     }
 
     return *move != 0;
+}
+
+bool board_is_en_passant(const board_t *pos, move_t move) {
+    int diff = abs(move_to(move) - move_from(move));
+    if (diff != 7 && diff != 9) return false;
+    if (pos->pawns & BB_SQUARE(move_from(move))) return false;
+    if ((pos->white | pos->black) & BB_SQUARE(move_to(move))) return false;
+    return true;
+}
+
+bool board_is_capture(const board_t *pos, move_t move) {
+    uint64_t them = pos->turn ? pos->black : pos->white;
+    return BB_SQUARE(move_to(move)) & them || board_is_en_passant(pos, move);
+}
+
+char *board_san(const board_t *pos, move_t move, char *san) {
+    if (!move) {
+        strcpy(san, "--");
+        return san;
+    }
+
+    board_t pos_after = *pos;
+    board_move(&pos_after, move);
+
+    bool check = board_checkers(&pos_after, pos_after.turn);
+    bool checkmate = check && board_is_checkmate(&pos_after);
+
+    // TODO: Castling
+
+    char piece_type = board_piece_type_at(pos, move_from(move));
+    if (piece_type != 'p') {
+        // Add piece type to SAN.
+        *san++ = piece_type - 'a' + 'A';
+
+        // Get ambiguous move candidates: Not exactly the current move but to
+        // the same square.
+        uint64_t from_mask = board_pieces(pos, piece_type, pos->turn) & ~BB_SQUARE(move_from(move));
+        uint64_t to_mask = BB_SQUARE(move_to(move));
+
+        uint64_t others = 0;
+        move_t moves[64];
+        move_t *end = board_legal_moves(pos, moves, from_mask, to_mask);
+        for (move_t *current = moves; current < end; current++) {
+            others |= BB_SQUARE(move_from(*current));
+        }
+
+        // Disambiguate.
+        if (others) {
+            bool row = false, column = false;
+
+            if (others & BB_RANK(square_rank(move_from(move)))) column = true;
+
+            if (others & BB_FILE(square_file(move_from(move)))) row = true;
+            else column = true;
+
+            if (column) *san++ = 'a' + square_file(move_from(move));
+            if (row) *san++ = '1' + square_rank(move_from(move));
+        }
+    }
+
+    // Captures.
+    if (board_is_capture(pos, move)) {
+        if (piece_type == 'p') *san++ = 'a' + square_file(move_from(move));
+        *san++ = 'x';
+    }
+
+    // Destination square.
+    san = square_name(move_to(move), san);
+
+    // Promotion.
+    char promotion = move_piece_type(move);
+    if (promotion) {
+        *san++ = '=';
+        *san++ = promotion - 'a' + 'A';
+    }
+
+    // Add check or checkmate suffix.
+    if (checkmate) *san++ = '#';
+    else if (check) *san++ = '+';
+    *san = 0;
+    return san;
 }
 
 uint64_t board_zobrist_hash(const board_t *pos, const uint64_t array[]) {
