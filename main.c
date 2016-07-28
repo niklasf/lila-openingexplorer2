@@ -83,7 +83,7 @@ void get_master(struct evhttp_request *req, void *context) {
     const char *jsonp = NULL;
     if (0 == evhttp_parse_query(uri, &query)) {
         fen = evhttp_find_header(&query, "fen");
-        jsonp = evhttp_find_header(&query, "jsonp");
+        jsonp = evhttp_find_header(&query, "callback");
     }
     if (!fen || !strlen(fen)) {
         evhttp_send_error(req, HTTP_BADREQUEST, "Missing FEN");
@@ -110,6 +110,15 @@ void get_master(struct evhttp_request *req, void *context) {
         abort();
     }
 
+    struct evkeyvalq *headers = evhttp_request_get_output_headers(req);
+
+    if (jsonp && strlen(jsonp)) {
+        evhttp_add_header(headers, "Content-Type", "application/javascript");
+        evbuffer_add_printf(res, "%s(", jsonp);
+    } else {
+        evhttp_add_header(headers, "Content-Type", "application/json");
+    }
+
     struct master_record *record = master_record_new();
     decode_master_record((const uint8_t *) encoded_record, record);
 
@@ -125,6 +134,9 @@ void get_master(struct evhttp_request *req, void *context) {
         evbuffer_add_printf(res, "      \"san\": \"%s\",", san);
         evbuffer_add_printf(res, "    }\n");
     }
+
+    evbuffer_add_printf(res, "  ]\n");
+    evbuffer_add_printf(res, "}%s\n", (jsonp && strlen(jsonp)) ? ")" : "");
 
     evhttp_send_reply(req, HTTP_OK, "OK", res);
     evbuffer_free(res);
