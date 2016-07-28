@@ -6,68 +6,51 @@
 #include "square.h"
 #include "attacks.h"
 
-uint64_t board_pieces(const struct board *pos, char piece_type, bool color) {
-    uint64_t pieces = 0;
-    if (piece_type == 'p') pieces = pos->pawns;
-    else if (piece_type == 'n') pieces = pos->knights;
-    else if (piece_type == 'b') pieces = pos->bishops;
-    else if (piece_type == 'r') pieces = pos->rooks;
-    else if (piece_type == 'q') pieces = pos->queens;
-    else if (piece_type == 'k') pieces = pos->kings;
-
-    return (color ? pos->white : pos->black) & pieces;
+uint64_t board_pieces(const struct board *pos, piece_type_t piece_type, bool color) {
+    return pos->occupied[piece_type] & pos->occupied_co[color];
 }
 
-char board_piece_type_at(const struct board *pos, uint8_t square) {
+piece_type_t board_piece_type_at(const struct board *pos, uint8_t square) {
     uint64_t bb = BB_SQUARE(square);
 
-    if (pos->pawns & bb) return 'p';
-    else if (pos->knights & bb) return 'n';
-    else if (pos->bishops & bb) return 'b';
-    else if (pos->rooks & bb) return 'r';
-    else if (pos->queens & bb) return 'q';
-    else if (pos->kings & bb) return 'k';
-    else return 0;
+    for (piece_type_t pt = 0; pt < kNone; pt++) {
+        if (pos->occupied[pt] & bb) return pt;
+    }
+
+    return kNone;
 }
 
 char board_piece_at(const struct board *pos, uint8_t square) {
     uint64_t bb = BB_SQUARE(square);
+    piece_type_t pt = board_piece_type_at(pos, square);
 
-    if (pos->black & bb) return board_piece_type_at(pos, square);
-    else if (pos->white & bb) return board_piece_type_at(pos, square) - 'a' + 'A';
-    else return 0;
+    for (int color = 0; color <= 2; color++) {
+        if (pos->occupied_co[color] & bb) return piece_symbol(pt, color);
+    }
+
+    return 0;
 }
 
 void board_remove_piece_at(struct board *pos, uint8_t square) {
     uint64_t mask = ~BB_SQUARE(square);
-    pos->white &= mask;
-    pos->black &= mask;
-    pos->kings &= mask;
-    pos->queens &= mask;
-    pos->rooks &= mask;
-    pos->bishops &= mask;
-    pos->knights &= mask;
-    pos->pawns &= mask;
-}
 
-void board_set_piece_at(struct board *pos, uint8_t square, char piece) {
-    board_remove_piece_at(pos, square);
-
-    uint64_t bb = BB_SQUARE(square);
-
-    if (piece >= 'a' && piece <= 'z') pos->black |= bb;
-    else {
-        pos->white |= bb;
-        piece = piece - 'A' + 'a';
+    for (int color = 0; color <= 2; color++) {
+        pos->occupied_co[color] &= mask;
     }
 
-    if (piece == 'k') pos->kings |= bb;
-    else if (piece == 'q') pos->queens |= bb;
-    else if (piece == 'r') pos->rooks |= bb;
-    else if (piece == 'b') pos->bishops |= bb;
-    else if (piece == 'n') pos->knights |= bb;
-    else if (piece == 'p') pos->pawns |= bb;
-    else assert(false);
+    for (piece_type_t pt = 0; pt < kNone; pt++) {
+        pos->occupied[pt] &= mask;
+    }
+}
+
+void board_set_piece_at(struct board *pos, uint8_t square, piece_type_t pt, bool color) {
+    board_remove_piece_at(pos, square);
+
+    if (pt != kNone) {
+        uint64_t bb = BB_SQUARE(square);
+        pos->occupied_co[color] |= bb;
+        pos->occupied[pt] |= bb;
+    }
 }
 
 void board_print(const struct board *pos) {
@@ -82,15 +65,8 @@ void board_print(const struct board *pos) {
     }
 }
 
-void board_clear(struct board *pos) {
-    pos->white = 0;
-    pos->black = 0;
-    pos->kings = 0;
-    pos->queens = 0;
-    pos->rooks = 0;
-    pos->bishops = 0;
-    pos->knights = 0;
-    pos->pawns = 0;
+void board_clear(board_t *pos) {
+    memset(pos, 0, sizeof(board_t));
 
     pos->turn = true;
 
@@ -101,19 +77,19 @@ void board_clear(struct board *pos) {
 }
 
 void board_reset(struct board *pos) {
-    pos->white = BB_RANK_1 | BB_RANK_2;
-    pos->black = BB_RANK_7 | BB_RANK_8;
-    pos->kings = BB_E1 | BB_E8;
-    pos->queens = BB_D1 | BB_D8;
-    pos->rooks = BB_A1 | BB_A8 | BB_H1 | BB_H8;
-    pos->bishops = BB_C1 | BB_C8 | BB_F1 | BB_F8;
-    pos->knights = BB_B1 | BB_B8 | BB_G1 | BB_G8;
-    pos->pawns = BB_RANK_2 | BB_RANK_7;
+    pos->occupied_co[1] = BB_RANK_1 | BB_RANK_2;
+    pos->occupied_co[0] = BB_RANK_7 | BB_RANK_8;
+    pos->occupied[kKing] = BB_E1 | BB_E8;
+    pos->occupied[kQueen] = BB_D1 | BB_D8;
+    pos->occupied[kRook] = BB_A1 | BB_A8 | BB_H1 | BB_H8;
+    pos->occupied[kBishop] = BB_C1 | BB_C8 | BB_F1 | BB_F8;
+    pos->occupied[kKnight] = BB_B1 | BB_B8 | BB_G1 | BB_G8;
+    pos->occupied[kPawn] = BB_RANK_2 | BB_RANK_7;
 
     pos->turn = true;
 
     pos->ep_square = 0;
-    pos->castling = pos->rooks;
+    pos->castling = pos->occupied[kRook];
 
     pos->halfmove_clock = 0;
     pos->fullmove_number = 1;
@@ -334,14 +310,14 @@ bool board_set_fen(struct board *pos, const char *fen) {
 
     // Commit board state.
 
-    pos->white = white;
-    pos->black = black;
-    pos->kings = kings;
-    pos->queens = queens;
-    pos->rooks = rooks;
-    pos->bishops = bishops;
-    pos->knights = knights;
-    pos->pawns = pawns;
+    pos->occupied_co[1] = white;
+    pos->occupied_co[0] = black;
+    pos->occupied[kKing] = kings;
+    pos->occupied[kQueen] = queens;
+    pos->occupied[kRook] = rooks;
+    pos->occupied[kBishop] = bishops;
+    pos->occupied[kKnight] = knights;
+    pos->occupied[kPawn] = pawns;
 
     pos->turn = turn;
     pos->ep_square = ep_square;
@@ -354,53 +330,46 @@ bool board_set_fen(struct board *pos, const char *fen) {
 }
 
 bool board_is_insufficient_material(const struct board *pos) {
-    if (pos->pawns || pos->rooks || pos->queens) return false;
-    else if (bb_popcount(pos->black | pos->white) <= 3) return true;
-    else if (pos->knights) return false;
-    else if (!(pos->bishops & BB_DARK_SQUARES)) return true;
-    else if (!(pos->bishops & BB_LIGHT_SQUARES)) return true;
+    if (pos->occupied[kPawn] || pos->occupied[kRook] || pos->occupied[kQueen]) return false;
+    else if (bb_popcount(pos->occupied_co[0] | pos->occupied_co[1]) <= 3) return true;
+    else if (pos->occupied[kKnight]) return false;
+    else if (!(pos->occupied[kBishop] & BB_DARK_SQUARES)) return true;
+    else if (!(pos->occupied[kBishop] & BB_LIGHT_SQUARES)) return true;
     else return false;
 }
 
 uint64_t board_attacks_to(const struct board *pos, uint8_t square) {
-    uint64_t occupied = pos->white | pos->black;
+    uint64_t occupied = pos->occupied_co[0] | pos->occupied_co[1];
 
     uint64_t attacks = 0;
-    attacks |= attacks_rook(square, occupied) & (pos->rooks | pos->queens);
-    attacks |= attacks_bishop(square, occupied) & (pos->bishops | pos->queens);
-    attacks |= attacks_knight(square) & pos->knights;
-    attacks |= attacks_king(square) & pos->kings;
-    attacks |= attacks_pawn(square, true) & pos->pawns & pos->black;
-    attacks |= attacks_pawn(square, false) & pos->pawns & pos->white;
+    attacks |= attacks_rook(square, occupied) & (pos->occupied[kRook] | pos->occupied[kQueen]);
+    attacks |= attacks_bishop(square, occupied) & (pos->occupied[kBishop] | pos->occupied[kQueen]);
+    attacks |= attacks_knight(square) & pos->occupied[kKnight];
+    attacks |= attacks_king(square) & pos->occupied[kKing];
+    attacks |= attacks_pawn(square, true) & pos->occupied[kPawn] & pos->occupied_co[0];
+    attacks |= attacks_pawn(square, false) & pos->occupied[kPawn] & pos->occupied_co[1];
     return attacks;
 }
 
 uint64_t board_attacks_from(const struct board *pos, uint8_t square) {
     uint64_t bb = BB_SQUARE(square);
-    uint64_t occupied = pos->white | pos->black;
-    if (pos->bishops & bb) return attacks_bishop(square, occupied);
-    else if (pos->rooks & bb) return attacks_rook(square, occupied);
-    else if (pos->queens & bb) return attacks_bishop(square, occupied) | attacks_rook(square, occupied);
-    else if (pos->knights & bb) return attacks_knight(square);
-    else if (pos->kings & bb) return attacks_king(square);
-    else if (pos->pawns & bb) return attacks_pawn(square, (pos->black & bb) == 0);
-    else return 0;
+    uint64_t occupied = pos->occupied_co[0] | pos->occupied_co[1];
+    switch (board_piece_at(pos, square)) {
+        case kBishop: return attacks_bishop(square, occupied);
+        case kRook: return attacks_rook(square, occupied);
+        case kQueen: return attacks_bishop(square, occupied) | attacks_rook(square, occupied);
+        case kKnight: return attacks_knight(square);
+        case kKing: return attacks_king(square);
+        case kPawn: return attacks_pawn(square, (pos->occupied_co[0] & bb) == 0);
+    }
+    return 0;
 }
 
 uint64_t board_checkers(const struct board *pos, bool turn) {
-    uint64_t we, them;
-    if (turn) {
-        we = pos->white;
-        them = pos->black;
-    } else {
-        we = pos->black;
-        them = pos->white;
-    }
-
-    uint64_t king = we & pos->kings;
+    uint64_t king = pos->occupied_co[turn] & pos->occupied[kKing];
     if (!king) return 0;
 
-    return board_attacks_to(pos, bb_lsb(king)) & them;
+    return board_attacks_to(pos, bb_lsb(king)) & pos->occupied_co[!turn];
 }
 
 bool board_is_checkmate(const struct board *pos) {
@@ -412,13 +381,13 @@ bool board_is_checkmate(const struct board *pos) {
 }
 
 uint64_t board_castling_rights(const board_t *pos) {
-    uint64_t castling = pos->castling & pos->rooks;
-    uint64_t white_castling = castling & BB_RANK_1 & pos->white;
-    uint64_t black_castling = castling & BB_RANK_8 & pos->black;
+    uint64_t castling = pos->castling & pos->occupied[kRook];
+    uint64_t white_castling = castling & BB_RANK_1 & pos->occupied_co[1];
+    uint64_t black_castling = castling & BB_RANK_8 & pos->occupied_co[0];
 
     // Find the kings.
-    uint64_t white_king = pos->white & pos->kings & BB_RANK_1;
-    uint64_t black_king = pos->black & pos->kings & BB_RANK_8;
+    uint64_t white_king = pos->occupied_co[1] & pos->occupied[kKing] & BB_RANK_1;
+    uint64_t black_king = pos->occupied_co[0] & pos->occupied[kKing] & BB_RANK_8;
 
     // The kings must be on the backrank.
     if (!white_king) white_castling = 0;
@@ -460,18 +429,11 @@ uint64_t board_castling_rights(const board_t *pos) {
 }
 
 move_t *board_castling_moves(const board_t *pos, move_t *moves, uint64_t from_mask, uint64_t to_mask) {
-    uint64_t we, them, backrank;
-    if (pos->turn) {
-        we = pos->white;
-        them = pos->black;
-        backrank = BB_RANK_1;
-    } else {
-        we = pos->black;
-        them = pos->white;
-        backrank = BB_RANK_8;
-    }
+    uint64_t we = pos->occupied_co[pos->turn];
+    uint64_t them = pos->occupied_co[!pos->turn];
+    uint64_t backrank = pos->turn ? BB_RANK_1 : BB_RANK_8;
 
-    uint64_t king_bb = we & pos->kings & from_mask & backrank;
+    uint64_t king_bb = we & pos->occupied[kKing] & from_mask & backrank;
     uint64_t candidates = board_castling_rights(pos) & backrank & to_mask;
     if (!king_bb || !candidates) return moves;
     square_t king = bb_lsb(king_bb);
@@ -489,7 +451,7 @@ move_t *board_castling_moves(const board_t *pos, move_t *moves, uint64_t from_ma
         square_t rook = bb_poplsb(&candidates);
         bool a_side = square_file(rook) < square_file(king);
 
-        if (a_side && (rook_bb & BB_FILE_B) && (them & (pos->queens | pos->rooks) & bb_a)) {
+        if (a_side && (rook_bb & BB_FILE_B) && (them & (pos->occupied[kQueen] | pos->occupied[kRook]) & bb_a)) {
             // We can't castle a-side because our rook shielded us from an
             // attack from a1 or a8.
             continue;
@@ -538,7 +500,7 @@ move_t *board_castling_moves(const board_t *pos, move_t *moves, uint64_t from_ma
         uint64_t not_attacked_for_king = empty_for_king;
         empty_for_king &= ~rook_bb;
 
-        if ((pos->white | pos->black) & (empty_for_king | empty_for_rook)) {
+        if ((pos->occupied_co[0] | pos->occupied_co[1]) & (empty_for_king | empty_for_rook)) {
             continue;
         }
 
@@ -572,17 +534,11 @@ static move_t *make_pawn_moves(const board_t *pos, square_t from, square_t to, m
 }
 
 move_t *board_pseudo_legal_moves(const board_t *pos, move_t *moves, uint64_t from_mask, uint64_t to_mask) {
-    uint64_t we, them;
-    if (pos->turn) {
-        we = pos->white;
-        them = pos->black;
-    } else {
-        we = pos->black;
-        them = pos->white;
-    }
+    uint64_t we = pos->occupied_co[pos->turn];
+    uint64_t them = pos->occupied_co[!pos->turn];
 
     // Generate piece moves.
-    uint64_t non_pawns = we & ~pos->pawns & from_mask;
+    uint64_t non_pawns = we & ~pos->occupied[kPawn] & from_mask;
     while (non_pawns) {
         square_t from_square = bb_poplsb(&non_pawns);
         uint64_t to_squares = board_attacks_from(pos, from_square) & ~we & to_mask;
@@ -597,7 +553,7 @@ move_t *board_pseudo_legal_moves(const board_t *pos, move_t *moves, uint64_t fro
     moves = board_castling_moves(pos, moves, from_mask, to_mask);
 
     // Generate pawn captures.
-    uint64_t pawns = we & pos->pawns & from_mask;
+    uint64_t pawns = we & pos->occupied[kPawn] & from_mask;
     uint64_t ep_mask = pos->ep_square ? BB_SQUARE(pos->ep_square) : BB_VOID;
     while (pawns) {
         square_t from_square = bb_poplsb(&pawns);
@@ -611,10 +567,10 @@ move_t *board_pseudo_legal_moves(const board_t *pos, move_t *moves, uint64_t fro
     // Prepare pawn advance generation.
     uint64_t single_moves, double_moves;
     if (pos->turn) {
-        single_moves = ((we & pos->pawns & from_mask) << 8) & ~(we | them);
+        single_moves = ((we & pos->occupied[kPawn] & from_mask) << 8) & ~(we | them);
         double_moves = (single_moves << 8) & ~(we | them) & BB_RANK_4;
     } else {
-        single_moves = ((we & pos->pawns & from_mask) >> 8) & ~(we | them);
+        single_moves = ((we & pos->occupied[kPawn] & from_mask) >> 8) & ~(we | them);
         double_moves = (single_moves >> 8) & ~(we | them) & BB_RANK_5;
     }
     single_moves &= to_mask;
@@ -638,14 +594,8 @@ move_t *board_pseudo_legal_moves(const board_t *pos, move_t *moves, uint64_t fro
 }
 
 void board_move(board_t *pos, move_t move) {
-    uint64_t we, them;
-    if (pos->turn) {
-        we = pos->white;
-        them = pos->black;
-    } else {
-        we = pos->black;
-        them = pos->white;
-    }
+    uint64_t we = pos->occupied_co[pos->turn];
+    uint64_t them = pos->occupied_co[!pos->turn];
 
     // Increment fullmove number.
     if (!pos->turn) pos->fullmove_number++;
@@ -949,26 +899,13 @@ uint64_t board_zobrist_hash(const board_t *pos, const uint64_t array[]) {
     uint64_t zobrist_hash = 0;
 
     // Board setup.
-    uint64_t occupied = pos->black | pos->white;
-    while (occupied) {
-        square_t square = bb_poplsb(&occupied);
-        char piece = board_piece_at(pos, square);
-        int piece_index = 0;
-        if (piece == 'p') piece_index = 0;
-        else if (piece == 'P') piece_index = 1;
-        else if (piece == 'n') piece_index = 2;
-        else if (piece == 'N') piece_index = 3;
-        else if (piece == 'b') piece_index = 4;
-        else if (piece == 'B') piece_index = 5;
-        else if (piece == 'r') piece_index = 6;
-        else if (piece == 'R') piece_index = 7;
-        else if (piece == 'q') piece_index = 8;
-        else if (piece == 'Q') piece_index = 9;
-        else if (piece == 'k') piece_index = 10;
-        else if (piece == 'K') piece_index = 11;
-        else assert(false);
-
-        zobrist_hash ^= array[64 * piece_index + 8 * square_rank(square) + square_file(square)];
+    for (piece_type_t pt = 0; pt < kNone; pt++) {
+        uint64_t squares = pos->occupied[pt];
+        while (squares) {
+            square_t square = bb_poplsb(&squares);
+            bool color = (pos->occupied_co[0] & BB_SQUARE(square)) == 0;
+            zobrist_hash ^= array[64 * 2 * pt + 64 * color + 8 * square_rank(square) + square_file(square)];
+        }
     }
 
     // TODO: Chess960 Castling.

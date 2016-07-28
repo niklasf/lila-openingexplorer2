@@ -5,21 +5,15 @@
 #include <stdint.h>
 
 #include "move.h"
+#include "piece.h"
 
 typedef struct board {
-    uint64_t white;
-    uint64_t black;
-    uint64_t kings;
-    uint64_t queens;
-    uint64_t rooks;
-    uint64_t bishops;
-    uint64_t knights;
-    uint64_t pawns;
+    uint64_t occupied_co[2];
+    uint64_t occupied[6];
 
     bool turn;
 
     uint64_t castling;
-
     uint8_t ep_square;
 
     int halfmove_clock;
