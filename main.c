@@ -9,6 +9,7 @@
 
 #include <kclangc.h>
 
+#include "attacks.h"
 #include "board.h"
 #include "encode.h"
 
@@ -79,8 +80,10 @@ void get_master(struct evhttp_request *req, void *context) {
 
     struct evkeyvalq query;
     const char *fen = NULL;
+    const char *jsonp = NULL;
     if (0 == evhttp_parse_query(uri, &query)) {
         fen = evhttp_find_header(&query, "fen");
+        jsonp = evhttp_find_header(&query, "jsonp");
     }
     if (!fen || !strlen(fen)) {
         evhttp_send_error(req, HTTP_BADREQUEST, "Missing FEN");
@@ -96,15 +99,31 @@ void get_master(struct evhttp_request *req, void *context) {
 
     size_t record_size;
     char *encoded_record = kcdbget(master_db, (const char *) &zobrist_hash, 8, &record_size);
-    struct master_record *record = master_record_new();
-    decode_master_record((const uint8_t *) encoded_record, record);
-
-    master_record_print(record);
+    if (!encoded_record) {
+        evhttp_send_error(req, HTTP_NOTFOUND, "Position Not Found");
+        return;
+    }
 
     struct evbuffer *res = evbuffer_new();
     if (!res) {
         puts("could not allocate response buffer");
         abort();
+    }
+
+    struct master_record *record = master_record_new();
+    decode_master_record((const uint8_t *) encoded_record, record);
+
+    evbuffer_add_printf(res, "{\n");
+    evbuffer_add_printf(res, "  moves: [\n");
+    for (size_t i = 0; i < record->num_moves; i++) {
+        char uci[LEN_UCI], san[LEN_SAN];
+        move_uci(record->moves[i].move, uci);
+        board_san(&pos, record->moves[i].move, san);
+
+        evbuffer_add_printf(res, "    {\n");
+        evbuffer_add_printf(res, "      \"uci\": \"%s\",", uci);
+        evbuffer_add_printf(res, "      \"san\": \"%s\",", san);
+        evbuffer_add_printf(res, "    }\n");
     }
 
     evhttp_send_reply(req, HTTP_OK, "OK", res);
@@ -140,6 +159,8 @@ int serve(int port) {
 }
 
 int main() {
+    attacks_init();
+
     master_pgn_db = kcdbnew();
     puts("opening master-pgn.kct ...");
     if (!kcdbopen(master_pgn_db, "master-pgn.kct", KCOREADER)) {
