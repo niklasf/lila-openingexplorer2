@@ -389,6 +389,14 @@ uint64_t board_checkers(const struct board *pos, bool turn) {
     return board_attacks_to(pos, bb_lsb(king)) & them;
 }
 
+bool board_is_checkmate(const struct board *pos) {
+    if (!board_checkers(pos)) return false;
+
+    move_t moves[255];
+    move_t *end = board_legal_moves(pos, moves, BB_ALL, BB_ALL);
+    return moves == end;
+}
+
 uint64_t board_castling_rights(const board_t *pos) {
     uint64_t castling = pos->castling & pos->rooks;
     uint64_t white_castling = castling & BB_RANK_1 & pos->white;
