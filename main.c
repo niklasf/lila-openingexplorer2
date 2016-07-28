@@ -70,17 +70,15 @@ void get_master(struct evhttp_request *req, void *context) {
         return;
     }
 
-    const struct evhttp_uri *uri = evhttp_request_get_evhttp_uri(req);
+    const char *uri = evhttp_request_get_uri(req);
     if (!uri) {
-        puts("evhttp_request_get_evhttp_uri failed");
+        puts("evhttp_request_get_uri failed");
         return;
     }
 
-    const char *query_str = evhttp_uri_get_query(uri);
     struct evkeyvalq query;
     const char *fen = NULL;
-    if (query_str &&
-        0 == evhttp_parse_query(query_str, &query)) {
+    if (0 == evhttp_parse_query(uri, &query)) {
         fen = evhttp_find_header(&query, "fen");
     }
     if (!fen || !strlen(fen)) {
