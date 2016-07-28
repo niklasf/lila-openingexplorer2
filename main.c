@@ -10,6 +10,7 @@
 #include <kclangc.h>
 
 #include "board.h"
+#include "encode.h"
 
 static KCDB *master_pgn_db;
 static KCDB *master_db;
@@ -91,7 +92,14 @@ void get_master(struct evhttp_request *req, void *context) {
         evhttp_send_error(req, HTTP_BADREQUEST, "Invalid FEN");
     }
 
-    board_print(&pos);
+    uint64_t zobrist_hash = board_zobrist_hash(&pos, POLYGLOT);
+
+    size_t record_size;
+    char *encoded_record = kcdbget(master_db, (const char *) &zobrist_hash, 8, &record_size);
+    struct master_record *record = master_record_new();
+    decode_master_record((const uint8_t *) encoded_record, record);
+
+    master_record_print(record);
 
     struct evbuffer *res = evbuffer_new();
     if (!res) {
