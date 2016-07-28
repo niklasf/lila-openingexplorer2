@@ -118,7 +118,8 @@ int serve(int port) {
         abort();
     }
 
-    evhttp_set_gencb(http, get_master_pgn, NULL);  // master/pgn/{8}
+    evhttp_set_cb(http, "/master", get_master, NULL); // master
+    evhttp_set_gencb(http, get_master_pgn, NULL);     // master/pgn/{8}
 
     struct evhttp_bound_socket *socket =
         evhttp_bind_socket_with_handle(http, "127.0.0.1", port);
