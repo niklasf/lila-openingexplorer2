@@ -886,7 +886,6 @@ char *board_san(const board_t *pos, move_t move, char *san) {
 
     board_t pos_after = *pos;
     board_move(&pos_after, move);
-
     bool check = board_checkers(&pos_after, pos_after.turn);
     bool checkmate = check && board_is_checkmate(&pos_after);
 

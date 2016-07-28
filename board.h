@@ -36,6 +36,8 @@ void board_print(const struct board *pos);
 
 bool board_is_insufficient_material(const struct board *pos);
 
+void board_remove_piece_at(struct board *pos, square_t square);
+
 uint64_t board_castling_rights(const struct board *pos);
 uint64_t board_attacks_to(const struct board *pos, uint8_t square);
 uint64_t board_attacks_from(const struct board *pos, uint8_t square);
@@ -45,6 +47,9 @@ move_t *board_pseudo_legal_moves(const struct board *pos, move_t *moves, uint64_
 move_t *board_legal_moves(const struct board *pos, move_t *moves, uint64_t from_mask, uint64_t to_mask);
 uint64_t board_zobrist_hash(const struct board *pos, const uint64_t array[]);
 bool board_parse_san(const struct board *pos, const char *san, move_t *move);
+
+static const size_t LEN_SAN = 8;
+char *board_san(const struct board *pos, move_t move, char *san);
 
 extern const uint64_t POLYGLOT[];
 

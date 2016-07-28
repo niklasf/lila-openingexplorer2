@@ -226,6 +226,32 @@ void test_board_parse_san() {
     assert(move == move_make(SQ_F6, SQ_E4, 0));
 }
 
+void test_board_san() {
+    puts("test_board_san");
+    board_t pos;
+    char san[LEN_SAN];
+
+    // Double pawn move.
+    board_reset(&pos);
+    board_san(&pos, move_make(SQ_H2, SQ_H4, 0), san);
+    assert(strcmp(san, "h4") == 0);
+
+    // Promotion.
+    assert(board_set_fen(&pos, "4k3/8/8/8/8/8/6p1/4K3 b - - 0 1"));
+    board_san(&pos, move_make(SQ_G2, SQ_G1, 'r'), san);
+    assert(strcmp(san, "g1=R+") == 0);
+
+    // Not ambiguous because of pin.
+    assert(board_set_fen(&pos, "4k3/8/8/b7/8/2N3N1/8/4K3 w - - 0 1"));
+    board_san(&pos, move_make(SQ_G3, SQ_E4, 0), san);
+    assert(strcmp(san, "Ne4") == 0);
+
+    // Ambiguous.
+    board_remove_piece_at(&pos, SQ_A5);
+    board_san(&pos, move_make(SQ_G3, SQ_E4, 0), san);
+    assert(strcmp(san, "Nge4") == 0);
+}
+
 int main() {
     attacks_init();
 
@@ -243,5 +269,6 @@ int main() {
     test_legal_promotion();
     test_board_zobrist_hash();
     test_board_parse_san();
+    test_board_san();
     return 0;
 }
