@@ -130,9 +130,9 @@ void get_master(struct evhttp_request *req, void *context) {
         board_san(&pos, record->moves[i].move, san);
 
         evbuffer_add_printf(res, "    {\n");
-        evbuffer_add_printf(res, "      \"uci\": \"%s\",", uci);
-        evbuffer_add_printf(res, "      \"san\": \"%s\",", san);
-        evbuffer_add_printf(res, "    }\n");
+        evbuffer_add_printf(res, "      \"uci\": \"%s\",\n", uci);
+        evbuffer_add_printf(res, "      \"san\": \"%s\",\n", san);
+        evbuffer_add_printf(res, "    }%s\n", (i < record->num_moves - 1) ? "," : "");
     }
 
     evbuffer_add_printf(res, "  ]\n");
