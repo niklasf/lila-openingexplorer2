@@ -138,6 +138,11 @@ int main() {
         printf("master-pgn.kct close error: %s\n", kcecodename(kcdbecode(master_pgn_db)));
     }
 
+    if (!kcdbclose(master_db)) {
+        printf("master.kch close error: %s\n", kcecodename(kcdbecode(master_db)));
+    }
+
     kcdbdel(master_pgn_db);
+    kcdbdel(master_db);
     return 0;
 }
