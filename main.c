@@ -9,7 +9,10 @@
 
 #include <kclangc.h>
 
+#include "board.h"
+
 static KCDB *master_pgn_db;
+static KCDB *master_db;
 
 void get_master_pgn(struct evhttp_request *req, void *context) {
     if (evhttp_request_get_command(req) != EVHTTP_REQ_GET) {
@@ -61,6 +64,47 @@ void get_master_pgn(struct evhttp_request *req, void *context) {
     evbuffer_free(res);
 }
 
+void get_master(struct evhttp_request *req, void *context) {
+    if (evhttp_request_get_command(req) != EVHTTP_REQ_GET) {
+        evhttp_send_error(req, HTTP_BADMETHOD, "Method Not Allowed");
+        return;
+    }
+
+    const struct evhttp_uri *uri = evhttp_request_get_evhttp_uri(req);
+    if (!uri) {
+        puts("evhttp_request_get_evhttp_uri failed");
+        return;
+    }
+
+    const char *query_str = evhttp_uri_get_query(uri);
+    struct evkeyvalq query;
+    const char *fen = NULL;
+    if (query_str &&
+        0 == evhttp_parse_query(query_str, &query)) {
+        fen = evhttp_find_header(&query, "fen");
+    }
+    if (!fen || !strlen(fen)) {
+        evhttp_send_error(req, HTTP_BADREQUEST, "Missing FEN");
+        return;
+    }
+
+    board_t pos;
+    if (!board_set_fen(&pos, fen)) {
+        evhttp_send_error(req, HTTP_BADREQUEST, "Invalid FEN");
+    }
+
+    board_print(&pos);
+
+    struct evbuffer *res = evbuffer_new();
+    if (!res) {
+        puts("could not allocate response buffer");
+        abort();
+    }
+
+    evhttp_send_reply(req, HTTP_OK, "OK", res);
+    evbuffer_free(res);
+}
+
 int serve(int port) {
     struct event_base *base = event_base_new();
     if (!base) {
@@ -90,15 +134,29 @@ int serve(int port) {
 
 int main() {
     master_pgn_db = kcdbnew();
+    puts("opening master-pgn.kct ...");
     if (!kcdbopen(master_pgn_db, "master-pgn.kct", KCOREADER)) {
         printf("master-pgn.kct open error: %s\n", kcecodename(kcdbecode(master_pgn_db)));
         return 1;
     }
 
+    master_db = kcdbnew();
+    puts("opening master.kch ...");
+    if (!kcdbopen(master_db, "master.kch", KCOREADER)) {
+        printf("master.kch open error: %s\n", kcecodename(kcdbecode(master_db)));
+        return 1;
+    }
+
+    puts("opened all databases.");
+
     int ret = serve(5555);
 
     if (!kcdbclose(master_pgn_db)) {
         printf("master-pgn.kct close error: %s\n", kcecodename(kcdbecode(master_pgn_db)));
+    }
+
+    if (!kcdbclose(master_db)) {
+        printf("master.kch close error: %s\n", kcecodename(kcdbecode(master_db)));
     }
 
     kcdbdel(master_pgn_db);
