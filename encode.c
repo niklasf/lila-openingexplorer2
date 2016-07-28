@@ -258,7 +258,7 @@ unsigned long master_record_black(const struct master_record *record) {
 }
 
 unsigned long master_record_average_rating_sum(const struct master_record *record) {
-    unsigned total = 0;
+    unsigned long total = 0;
     for (size_t i = 0; i < record->num_moves; i++) {
         total += record->moves[i].average_rating_sum;
     }

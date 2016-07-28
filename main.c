@@ -153,10 +153,6 @@ void get_master(struct evhttp_request *req, void *context) {
     evbuffer_add_printf(res, "  \"moves\": [\n");
     for (size_t i = 0; i < record->num_moves && i < moves; i++) {
         unsigned long move_total = record->moves[i].white + record->moves[i].draws + record->moves[i].black;
-        total += move_total;
-        total_white += record->moves[i].white;
-        total_draws += record->moves[i].draws;
-        total_black += record->moves[i].black;
 
         char uci[LEN_UCI], san[LEN_SAN];
         move_uci(record->moves[i].move, uci);
@@ -165,10 +161,10 @@ void get_master(struct evhttp_request *req, void *context) {
         evbuffer_add_printf(res, "    {\n");
         evbuffer_add_printf(res, "      \"uci\": \"%s\",\n", uci);
         evbuffer_add_printf(res, "      \"san\": \"%s\",\n", san);
-        evbuffer_add_printf(res, "      \"white\": \"%lu\",\n", record->moves[i].white);
-        evbuffer_add_printf(res, "      \"draws\": \"%lu\",\n", record->moves[i].draws);
-        evbuffer_add_printf(res, "      \"black\": \"%lu\",\n", record->moves[i].black);
-        evbuffer_add_printf(res, "      \"averageRating\": \"%lu\"\n", record->moves[i].average_rating_sum / move_total);
+        evbuffer_add_printf(res, "      \"white\": %lu,\n", record->moves[i].white);
+        evbuffer_add_printf(res, "      \"draws\": %lu,\n", record->moves[i].draws);
+        evbuffer_add_printf(res, "      \"black\": %lu,\n", record->moves[i].black);
+        evbuffer_add_printf(res, "      \"averageRating\": %lu\n", record->moves[i].average_rating_sum / move_total);
         evbuffer_add_printf(res, "    }%s\n", (i < record->num_moves - 1) ? "," : "");
     }
 
