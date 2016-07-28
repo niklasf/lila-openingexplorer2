@@ -90,6 +90,7 @@ void get_master(struct evhttp_request *req, void *context) {
         return;
     }
 
+    // Look up positon.
     board_t pos;
     if (!board_set_fen(&pos, fen)) {
         evhttp_send_error(req, HTTP_BADREQUEST, "Invalid FEN");
@@ -110,6 +111,7 @@ void get_master(struct evhttp_request *req, void *context) {
         abort();
     }
 
+    // Set Content-Type.
     struct evkeyvalq *headers = evhttp_request_get_output_headers(req);
 
     if (jsonp && strlen(jsonp)) {
@@ -123,10 +125,21 @@ void get_master(struct evhttp_request *req, void *context) {
     decode_master_record((const uint8_t *) encoded_record, record);
     master_record_sort(record);
 
+    unsigned long average_rating_sum = 0;
+    unsigned long total = 0;
+    unsigned long total_white = 0;
+    unsigned long total_draws = 0;
+    unsigned long total_black = 0;
+
+    // Add move list.
     evbuffer_add_printf(res, "{\n");
     evbuffer_add_printf(res, "  moves: [\n");
     for (size_t i = 0; i < record->num_moves; i++) {
         unsigned long move_total = record->moves[i].white + record->moves[i].draws + record->moves[i].black;
+        total += move_total;
+        total_white += record->moves[i].white;
+        total_draws += record->moves[i].draws;
+        total_black += record->moves[i].black;
 
         char uci[LEN_UCI], san[LEN_SAN];
         move_uci(record->moves[i].move, uci);
@@ -142,7 +155,18 @@ void get_master(struct evhttp_request *req, void *context) {
         evbuffer_add_printf(res, "    }%s\n", (i < record->num_moves - 1) ? "," : "");
     }
 
+    evbuffer_add_printf(res, "  ],\n");
+
+    // Add totals.
+    evbuffer_add_printf(res, "  \"white\": %lu,\n", total_white);
+    evbuffer_add_printf(res, "  \"draws\": %lu,\n", total_draws);
+    evbuffer_add_printf(res, "  \"black\": %lu,\n", total_black);
+    evbuffer_add_printf(res, "  \"averageRating\": %lu,\n", average_rating_sum / total);
+
+    // TODO: Add top games.
+    evbuffer_add_printf(res, "  \"topGames\": [\n");
     evbuffer_add_printf(res, "  ]\n");
+
     evbuffer_add_printf(res, "}%s\n", (jsonp && strlen(jsonp)) ? ")" : "");
 
     evhttp_send_reply(req, HTTP_OK, "OK", res);
