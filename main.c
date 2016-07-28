@@ -163,8 +163,11 @@ void get_master(struct evhttp_request *req, void *context) {
     evbuffer_add_printf(res, "  \"black\": %lu,\n", total_black);
     evbuffer_add_printf(res, "  \"averageRating\": %lu,\n", average_rating_sum / total);
 
-    // TODO: Add top games.
+    // Add top games.
     evbuffer_add_printf(res, "  \"topGames\": [\n");
+    for (size_t i = 0; i < record->num_refs; i++) {
+        // TODO
+    }
     evbuffer_add_printf(res, "  ]\n");
 
     evbuffer_add_printf(res, "}%s\n", (jsonp && strlen(jsonp)) ? ")" : "");
