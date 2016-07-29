@@ -127,7 +127,13 @@ void test_random_epd() {
             unsigned depth;
             unsigned long p;
             assert(sscanf(line, "perft %d %lu", &depth, &p) == 2);
-            if (p < 100000) assert(perft(&pos, depth) == p);
+            if (p < 100000) {
+                unsigned long result = perft(&pos, depth);
+                if (result != p) {
+                    printf("expected %lu, got %lu\n", p, result);
+                    abort();
+                }
+            }
         }
     }
 
