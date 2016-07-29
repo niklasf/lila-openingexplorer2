@@ -281,6 +281,24 @@ void test_board_pin() {
     assert(!found_Nce4);
 }
 
+void test_initial_legal_moves() {
+    puts("test_initial_legal_moves");
+
+    board_t pos;
+    board_reset(&pos);
+
+    move_t moves[255];
+    move_t *end = board_legal_moves(&pos, moves, BB_ALL, BB_ALL);
+    for (move_t *current = moves; current < end; current++) {
+        char san[LEN_SAN], uci[LEN_UCI];
+        move_uci(*current, uci);
+        board_san(&pos, *current, san);
+        printf("- %s %s\n", uci, san);
+    }
+
+    assert(end - moves == 20);
+}
+
 int main() {
     attacks_init();
 
@@ -301,5 +319,6 @@ int main() {
     test_board_san();
     test_board_evasive_capture();
     test_board_pin();
+    test_initial_legal_moves();
     return 0;
 }
