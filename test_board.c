@@ -251,6 +251,17 @@ void test_board_san() {
     assert(strcmp(san, "Nge4") == 0);
 }
 
+void test_board_evasive_capture() {
+    puts("test_board_evasive_capture");
+    board_t pos;
+    board_set_fen(&pos, "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P1RPP/R2Q2K1 b af - 1 1");
+    board_move(&pos, move_make(SQ_B6, SQ_F2, 0));
+
+    move_t moves[255];
+    move_t *end = board_legal_moves(&pos, moves, BB_ALL, BB_ALL);
+    assert(end - moves == 3);
+}
+
 int main() {
     attacks_init();
 
@@ -269,5 +280,6 @@ int main() {
     test_board_zobrist_hash();
     test_board_parse_san();
     test_board_san();
+    test_board_evasive_capture();
     return 0;
 }

@@ -33,11 +33,11 @@ char board_piece_at(const struct board *pos, uint8_t square) {
 void board_remove_piece_at(struct board *pos, uint8_t square) {
     uint64_t mask = ~BB_SQUARE(square);
 
-    for (int color = 0; color <= 2; color++) {
+    for (int color = 0; color <= 1; color++) {
         pos->occupied_co[color] &= mask;
     }
 
-    for (piece_type_t pt = 0; pt < kNone; pt++) {
+    for (piece_type_t pt = kAll; pt <= kKing; pt++) {
         pos->occupied[pt] &= mask;
     }
 }

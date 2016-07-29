@@ -46,11 +46,12 @@ unsigned long print_perfts(const board_t *pos, unsigned depth) {
 }
 
 void test_position_4() {
-    puts("test_position_4");
+    const char fen[] = "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1";
+    printf("test_position_4: %s\n", fen);
 
     // Position 4 from https://chessprogramming.wikispaces.com/Perft+Results.
     board_t pos;
-    board_set_fen(&pos, "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P2PP/R2Q1RK1 w kq - 0 1");
+    assert(board_set_fen(&pos, fen));
     print_perfts(&pos, 3);
 
     // The position after f1f2.
