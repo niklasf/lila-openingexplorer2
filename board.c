@@ -663,7 +663,7 @@ void board_move(board_t *pos, move_t move) {
         }
     } else {
         // Put piece on target square.
-        if (promotion) board_set_piece_at(pos, move_to(move), promotion, !pos->turn);
+        if (promotion) board_set_piece_at(pos, move_to(move), promotion, pos->turn);
         else board_set_piece_at(pos, move_to(move), piece, pos->turn);
     }
 
@@ -839,10 +839,10 @@ char *board_san(const board_t *pos, move_t move, char *san) {
 
     // TODO: Castling
 
-    char piece_type = board_piece_type_at(pos, move_from(move));
-    if (piece_type != 'p') {
+    piece_type_t piece_type = board_piece_type_at(pos, move_from(move));
+    if (piece_type != kPawn) {
         // Add piece type to SAN.
-        *san++ = piece_type - 'a' + 'A';
+        *san++ = piece_symbol(piece_type, kWhite);
 
         // Get ambiguous move candidates: Not exactly the current move but to
         // the same square.
@@ -872,7 +872,7 @@ char *board_san(const board_t *pos, move_t move, char *san) {
 
     // Captures.
     if (board_is_capture(pos, move)) {
-        if (piece_type == 'p') *san++ = 'a' + square_file(move_from(move));
+        if (piece_type == kPawn) *san++ = 'a' + square_file(move_from(move));
         *san++ = 'x';
     }
 
@@ -880,10 +880,9 @@ char *board_san(const board_t *pos, move_t move, char *san) {
     san = square_name(move_to(move), san);
 
     // Promotion.
-    char promotion = move_piece_type(move);
-    if (promotion) {
+    if (move_piece_type(move)) {
         *san++ = '=';
-        *san++ = promotion - 'a' + 'A';
+        *san++ = piece_symbol(move_piece_type(move), kWhite);
     }
 
     // Add check or checkmate suffix.

@@ -232,12 +232,12 @@ void test_board_san() {
 
     // Double pawn move.
     board_reset(&pos);
-    board_san(&pos, move_make(SQ_H2, SQ_H4, 0), san);
+    board_san(&pos, move_make(SQ_H2, SQ_H4, kNone), san);
     assert(strcmp(san, "h4") == 0);
 
     // Promotion.
     assert(board_set_fen(&pos, "4k3/8/8/8/8/8/6p1/4K3 b - - 0 1"));
-    board_san(&pos, move_make(SQ_G2, SQ_G1, 'r'), san);
+    board_san(&pos, move_make(SQ_G2, SQ_G1, kRook), san);
     assert(strcmp(san, "g1=R+") == 0);
 
     // Not ambiguous because of pin.
