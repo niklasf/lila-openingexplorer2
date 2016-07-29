@@ -21,10 +21,19 @@ void test_attacks_knight() {
     assert(bb_popcount(attacks_knight(SQ_D4)) == 8);
 }
 
+void test_attacks_bishop() {
+    puts("test_attacks_bishop");
+
+    uint64_t attacks = attacks_bishop(SQ_F1, BB_G1 | BB_F2);
+    bb_print(attacks);
+    assert(!(BB_F2 & attacks));
+}
+
 int main() {
     attacks_init();
 
     test_attacks_rook();
     test_attacks_knight();
+    test_attacks_bishop();
     return 0;
 }
