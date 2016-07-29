@@ -80,7 +80,7 @@ const char *visit_master_pgn(const char *game_id, size_t game_id_size,
     while (line) {
         char *token = strtok_r(line, " ", &saveptr_line);
 
-        for (; token && pos.fullmove_number <= 25; token = strtok_r(NULL, " ", &saveptr_line)) {
+        for (; token && pos.fmvn <= 25; token = strtok_r(NULL, " ", &saveptr_line)) {
             // Skip move numbers and game results.
             if ('0' <= token[0] && token[0] <= '9') continue;
 
