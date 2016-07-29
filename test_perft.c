@@ -11,14 +11,14 @@ unsigned long perft(const board_t *pos, unsigned depth) {
 
 
     move_t moves[255];
-    move_t *end = board_pseudo_legal_moves(pos, moves, BB_ALL, BB_ALL);
+    move_t *end = board_legal_moves(pos, moves, BB_ALL, BB_ALL);
 
     unsigned long result = 0;
 
     for (move_t *current = moves; current < end; current++) {
         board_t pos_after = *pos;
         board_move(&pos_after, *current);
-        if (!board_checkers(&pos_after, pos->turn)) result += perft(&pos_after, depth - 1);
+        result += perft(&pos_after, depth - 1);
     }
 
     return result;
