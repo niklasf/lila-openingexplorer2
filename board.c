@@ -6,14 +6,14 @@
 #include "square.h"
 #include "attacks.h"
 
-uint64_t board_pieces(const struct board *pos, piece_type_t piece_type, bool color) {
+uint64_t board_pieces(const board_t *pos, piece_type_t piece_type, color_t color) {
     return pos->occupied[piece_type] & pos->occupied_co[color];
 }
 
 piece_type_t board_piece_type_at(const struct board *pos, uint8_t square) {
     uint64_t bb = BB_SQUARE(square);
 
-    for (piece_type_t pt = 0; pt < kNone; pt++) {
+    for (piece_type_t pt = kPawn; pt <= kKing; pt++) {
         if (pos->occupied[pt] & bb) return pt;
     }
 
@@ -24,9 +24,8 @@ char board_piece_at(const struct board *pos, uint8_t square) {
     uint64_t bb = BB_SQUARE(square);
     piece_type_t pt = board_piece_type_at(pos, square);
 
-    for (int color = 0; color <= 2; color++) {
-        if (pos->occupied_co[color] & bb) return piece_symbol(pt, color);
-    }
+    if (pos->occupied_co[0] & bb) return piece_symbol(pt, 0);
+    if (pos->occupied_co[1] & bb) return piece_symbol(pt, 1);
 
     return 0;
 }
@@ -43,7 +42,7 @@ void board_remove_piece_at(struct board *pos, uint8_t square) {
     }
 }
 
-void board_set_piece_at(struct board *pos, uint8_t square, piece_type_t pt, bool color) {
+void board_set_piece_at(board_t *pos, square_t square, piece_type_t pt, color_t color) {
     board_remove_piece_at(pos, square);
 
     if (pt != kNone) {
@@ -609,8 +608,8 @@ void board_move(board_t *pos, move_t move) {
     }
 
     // Update the half move clock.
-    char piece = board_piece_at(pos, move_from(move));
-    if (piece == 'p' || piece == 'P' || BB_SQUARE(move_to(move)) & them) {
+    piece_type_t piece = board_piece_type_at(pos, move_from(move));
+    if (piece == kPawn || BB_SQUARE(move_to(move)) & them) {
         pos->halfmove_clock = 0;
     } else {
         pos->halfmove_clock++;
@@ -620,12 +619,10 @@ void board_move(board_t *pos, move_t move) {
     pos->castling = board_castling_rights(pos);
     pos->castling &= ~BB_SQUARE(move_to(move));
     pos->castling &= ~BB_SQUARE(move_from(move));
-    if (piece == 'K') pos->castling &= ~BB_RANK_1;
-    else if (piece == 'k') pos->castling &= ~BB_RANK_8;
+    if (piece == kKing) pos->castling &= ~(pos->turn ? BB_RANK_1 : BB_RANK_8);
 
     // Promotion.
-    char promotion = move_piece_type(move);
-    if (promotion && pos->turn) promotion += 'A' - 'a';
+    piece_type_t promotion = move_piece_type(move);
 
     // Remove piece from original square.
     board_remove_piece_at(pos, move_from(move));
@@ -633,7 +630,7 @@ void board_move(board_t *pos, move_t move) {
     // Handle special pawn moves.
     pos->ep_square = 0;
     int diff = move_to(move) - move_from(move);
-    if (piece == 'P') {
+    if (piece == kPawn && pos->turn) {
         // Remove pawns captured en passant.
         if ((diff == 7 || diff == 9) && !(BB_SQUARE(move_to(move)) & them)) {
             board_remove_piece_at(pos, move_to(move) - 8);
@@ -641,7 +638,7 @@ void board_move(board_t *pos, move_t move) {
 
         // Set en passant square.
         if (diff == 16) pos->ep_square = move_to(move) - 8;
-    } else if (piece == 'p') {
+    } else if (piece == kPawn) {
         // Remove pawns captured en passant.
         if ((diff == -7 || diff == -9) && !(BB_SQUARE(move_to(move)) & them)) {
             board_remove_piece_at(pos, move_to(move) + 8);
@@ -651,22 +648,23 @@ void board_move(board_t *pos, move_t move) {
         if (diff == -16) pos->ep_square = move_to(move) + 8;
     }
 
-    if ((piece == 'k' || piece == 'K') && (BB_SQUARE(move_to(move)) & we)) {
+    if (piece == kKing && (BB_SQUARE(move_to(move)) & we)) {
         // Castling.
         board_remove_piece_at(pos, move_from(move));
         board_remove_piece_at(pos, move_to(move));
 
         bool a_side = square_file(move_to(move)) < square_file(move_from(move));
         if (a_side) {
-            board_set_piece_at(pos, pos->turn ? SQ_C1 : SQ_C8, piece);
-            board_set_piece_at(pos, pos->turn ? SQ_D1 : SQ_D8, pos->turn ? 'R' : 'r');
+            board_set_piece_at(pos, pos->turn ? SQ_C1 : SQ_C8, piece, pos->turn);
+            board_set_piece_at(pos, pos->turn ? SQ_D1 : SQ_D8, kRook, pos->turn);
         } else {
-            board_set_piece_at(pos, pos->turn ? SQ_G1 : SQ_G8, piece);
-            board_set_piece_at(pos, pos->turn ? SQ_F1 : SQ_F8, pos->turn ? 'R' : 'r');
+            board_set_piece_at(pos, pos->turn ? SQ_G1 : SQ_G8, piece, pos->turn);
+            board_set_piece_at(pos, pos->turn ? SQ_F1 : SQ_F8, kRook, pos->turn);
         }
     } else {
         // Put piece on target square.
-        board_set_piece_at(pos, move_to(move), promotion ? promotion : piece);
+        if (promotion) board_set_piece_at(pos, move_to(move), promotion, !pos->turn);
+        else board_set_piece_at(pos, move_to(move), piece, pos->turn);
     }
 
     // Swap turn.
@@ -722,27 +720,27 @@ bool board_parse_san(const board_t *pos, const char *san, move_t *move) {
     uint64_t to_mask = BB_ALL;
     switch (*san) {
         case 'K':
-            from_mask = pos->kings;
+            from_mask = pos->occupied[kKing];
             san++;
             break;
         case 'Q':
-            from_mask = pos->queens;
+            from_mask = pos->occupied[kQueen];
             san++;
             break;
         case 'R':
-            from_mask = pos->rooks;
+            from_mask = pos->occupied[kRook];
             san++;
             break;
         case 'B':
-            from_mask = pos->bishops;
+            from_mask = pos->occupied[kBishop];
             san++;
             break;
         case 'N':
-            from_mask = pos->knights;
+            from_mask = pos->occupied[kKnight];
             san++;
             break;
         default:
-            from_mask = pos->pawns;
+            from_mask = pos->occupied[kPawn];
             break;
     }
 
@@ -760,7 +758,7 @@ bool board_parse_san(const board_t *pos, const char *san, move_t *move) {
     }
 
     if (*san == 'x') {
-        uint64_t captures = pos->turn ? pos->black : pos->white;
+        uint64_t captures = pos->occupied_co[!pos->turn];
         if (pos->ep_square) captures |= BB_SQUARE(pos->ep_square);
         to_mask &= captures;
         san++;
@@ -818,13 +816,13 @@ bool board_parse_san(const board_t *pos, const char *san, move_t *move) {
 bool board_is_en_passant(const board_t *pos, move_t move) {
     int diff = abs(move_to(move) - move_from(move));
     if (diff != 7 && diff != 9) return false;
-    if (pos->pawns & BB_SQUARE(move_from(move))) return false;
-    if ((pos->white | pos->black) & BB_SQUARE(move_to(move))) return false;
+    if (pos->occupied[kPawn] & BB_SQUARE(move_from(move))) return false;
+    if (pos->occupied_co[!pos->turn] & BB_SQUARE(move_to(move))) return false;
     return true;
 }
 
 bool board_is_capture(const board_t *pos, move_t move) {
-    uint64_t them = pos->turn ? pos->black : pos->white;
+    uint64_t them = pos->occupied_co[!pos->turn];
     return BB_SQUARE(move_to(move)) & them || board_is_en_passant(pos, move);
 }
 

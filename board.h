@@ -9,7 +9,7 @@
 
 typedef struct board {
     uint64_t occupied_co[2];
-    uint64_t occupied[6];
+    uint64_t occupied[7];
 
     bool turn;
 
@@ -22,6 +22,8 @@ typedef struct board {
 
 void board_clear(struct board *pos);
 void board_reset(struct board *pos);
+uint64_t board_pieces(const board_t *pos, piece_type_t pt, color_t color);
+void board_set_piece_at(board_t *pos, square_t square, piece_type_t pt, color_t color);
 
 bool board_set_fen(struct board *pos, const char *fen);
 char *board_shredder_fen(const struct board *pos, char *fen);

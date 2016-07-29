@@ -2,14 +2,13 @@
 #define PIECE_H_
 
 typedef enum {
-  kPawn,
-  kKnight,
-  kBishop,
-  kRook,
-  kQueen,
-  kKing,
-  kNone
+    kAll, kPawn, kKnight, kBishop, kRook, kQueen, kKing,
+    kNone = 0
 } piece_type_t;
+
+typedef enum {
+    kBlack, kWhite
+} color_t;
 
 static const char PIECE_SYMBOLS[] = "\0pnbrqk";
 
