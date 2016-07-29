@@ -897,12 +897,13 @@ uint64_t board_zobrist_hash(const board_t *pos, const uint64_t array[]) {
     uint64_t zobrist_hash = 0;
 
     // Board setup.
-    for (piece_type_t pt = 0; pt < kNone; pt++) {
+    for (piece_type_t pt = kPawn; pt <= kKing; pt++) {
         uint64_t squares = pos->occupied[pt];
         while (squares) {
             square_t square = bb_poplsb(&squares);
             bool color = (pos->occupied_co[0] & BB_SQUARE(square)) == 0;
-            zobrist_hash ^= array[64 * 2 * pt + 64 * color + 8 * square_rank(square) + square_file(square)];
+            int piece_index = (pt - 1) * 2 + color;
+            zobrist_hash ^= array[64 * piece_index + 8 * square_rank(square) + square_file(square)];
         }
     }
 
