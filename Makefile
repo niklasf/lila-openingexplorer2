@@ -15,12 +15,11 @@ index_master: index_master.o encode.o pgn.o attacks.o board.o bitboard.o move.o 
 	$(CC) -o $@ $^ $(LDFLAGS)
 
 .PHONY: test
-test: .depend test_bitboard test_attacks test_board test_perft test_encode test_pgn
+test: .depend test_bitboard test_attacks test_board test_perft test_encode
 	./test_bitboard
 	./test_attacks
 	./test_board
 	./test_encode
-	./test_pgn
 
 test_bitboard: test_bitboard.o bitboard.o square.o
 	$(CC) -o $@ $^ $(LDFLAGS)

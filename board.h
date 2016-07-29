@@ -10,14 +10,15 @@
 typedef struct board {
     uint64_t occupied_co[2];
     uint64_t occupied[7];
+    piece_type_t pieces[64];
 
-    bool turn;
+    color_t turn;
 
     uint64_t castling;
     uint8_t ep_square;
 
-    int halfmove_clock;
-    int fullmove_number;
+    int hmvc;
+    int fmvn;
 } board_t;
 
 void board_clear(struct board *pos);
@@ -37,7 +38,7 @@ void board_remove_piece_at(struct board *pos, square_t square);
 uint64_t board_castling_rights(const struct board *pos);
 uint64_t board_attacks_to(const struct board *pos, uint8_t square);
 uint64_t board_attacks_from(const struct board *pos, uint8_t square);
-uint64_t board_checkers(const struct board *pos, bool turn);
+uint64_t board_checkers(const board_t *pos, color_t turn);
 void board_move(board_t *pos, move_t move);
 move_t *board_pseudo_legal_moves(const struct board *pos, move_t *moves, uint64_t from_mask, uint64_t to_mask);
 move_t *board_legal_moves(const struct board *pos, move_t *moves, uint64_t from_mask, uint64_t to_mask);

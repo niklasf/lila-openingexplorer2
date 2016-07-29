@@ -36,9 +36,8 @@ void test_board_shredder_fen() {
     assert(strcmp(fen, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w HAha - 0 1") == 0);
 
     board_clear(&pos);
-    pos.occupied_co[kWhite] |= BB_D1;
-    pos.occupied_co[kBlack] |= BB_D8;
-    pos.occupied[kQueen] |= BB_D1 | BB_D8;
+    board_set_piece_at(&pos, SQ_D1, kQueen, kWhite);
+    board_set_piece_at(&pos, SQ_D8, kQueen, kBlack);
     board_shredder_fen(&pos, fen);
     assert(strcmp(fen, "3q4/8/8/8/8/8/8/3Q4 w - - 0 1") == 0);
 }
@@ -50,15 +49,12 @@ void test_board_set_fen() {
     assert(board_set_fen(&pos, "8/8/3k4/8/1q4N1/6K1/1p6/4R3 w - - 2 15"));
     assert(board_pieces(&pos, kQueen, kWhite) == 0);
     assert(pos.turn == true);
-    board_print(&pos);
 
     char fen[255];
     board_shredder_fen(&pos, fen);
-    puts(fen);
 
     assert(board_set_fen(&pos, "rnbqk1nr/ppppppbp/6p1/8/8/5NP1/PPPPPPBP/RNBQK2R b KQkq - 2 3"));
     board_shredder_fen(&pos, fen);
-    puts(fen);
     assert(pos.castling == (BB_A1 | BB_A8 | BB_H1 | BB_H8));
     assert(board_pieces(&pos, kQueen, kWhite) & BB_D1);
     assert(board_pieces(&pos, kQueen, kBlack) & BB_D8);
@@ -165,7 +161,6 @@ void test_board_legal_moves() {
 
     board_t pos;
     assert(board_set_fen(&pos, "r1bqkbnr/1ppp1ppp/p1n5/1B2p3/4P3/5N2/PPPP1PPP/RNBQK2R w KQkq - 0 4"));
-    board_print(&pos);
 
     move_t moves[255];
     move_t *end = board_legal_moves(&pos, moves, BB_ALL, BB_ALL);
@@ -243,6 +238,7 @@ void test_board_san() {
     // Not ambiguous because of pin.
     assert(board_set_fen(&pos, "4k3/8/8/b7/8/2N3N1/8/4K3 w - - 0 1"));
     board_san(&pos, move_make(SQ_G3, SQ_E4, 0), san);
+    puts(san);
     assert(strcmp(san, "Ne4") == 0);
 
     // Ambiguous.
@@ -254,12 +250,35 @@ void test_board_san() {
 void test_board_evasive_capture() {
     puts("test_board_evasive_capture");
     board_t pos;
-    board_set_fen(&pos, "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P1RPP/R2Q2K1 b af - 1 1");
+    assert(board_set_fen(&pos, "r3k2r/Pppp1ppp/1b3nbN/nP6/BBP1P3/q4N2/Pp1P1RPP/R2Q2K1 b af - 1 1"));
     board_move(&pos, move_make(SQ_B6, SQ_F2, 0));
 
     move_t moves[255];
     move_t *end = board_legal_moves(&pos, moves, BB_ALL, BB_ALL);
     assert(end - moves == 3);
+}
+
+void test_board_pin() {
+    puts("test_board_pin");
+
+    board_t pos;
+    assert(board_set_fen(&pos, "4k3/8/8/b7/8/2N3N1/8/4K3 w - - 0 1"));
+
+    move_t moves[255];
+    move_t *end = board_legal_moves(&pos, moves, BB_ALL, BB_ALL);
+    bool found_Nge4 = false, found_Nce4 = false;
+    for (move_t *current = moves; current < end; current++) {
+        char san[LEN_SAN], uci[LEN_UCI];
+        move_uci(*current, uci);
+        board_san(&pos, *current, san);
+        printf("- %s %s\n", uci, san);
+
+        if (*current == move_make(SQ_C3, SQ_E4, kNone)) found_Nce4 = true;
+        if (*current == move_make(SQ_G3, SQ_E4, kNone)) found_Nge4 = true;
+    }
+
+    assert(found_Nge4);
+    assert(!found_Nce4);
 }
 
 int main() {
@@ -281,5 +300,6 @@ int main() {
     test_board_parse_san();
     test_board_san();
     test_board_evasive_capture();
+    test_board_pin();
     return 0;
 }

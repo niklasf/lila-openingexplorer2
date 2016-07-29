@@ -17,4 +17,29 @@ static inline char piece_symbol(piece_type_t piece_type, bool color) {
     return (color && symbol) ? (symbol + ('A' - 'a')) : symbol;
 }
 
+static inline piece_type_t piece_type_from_symbol(char symbol) {
+    switch (symbol) {
+        case 'p':
+        case 'P':
+            return kPawn;
+        case 'n':
+        case 'N':
+            return kKnight;
+        case 'b':
+        case 'B':
+            return kBishop;
+        case 'r':
+        case 'R':
+            return kRook;
+        case 'q':
+        case 'Q':
+            return kQueen;
+        case 'k':
+        case 'K':
+            return kKing;
+        default:
+            return kNone;
+    }
+}
+
 #endif  // #ifndef PIECE_H_

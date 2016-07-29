@@ -11,13 +11,7 @@ uint64_t board_pieces(const board_t *pos, piece_type_t piece_type, color_t color
 }
 
 piece_type_t board_piece_type_at(const struct board *pos, uint8_t square) {
-    uint64_t bb = BB_SQUARE(square);
-
-    for (piece_type_t pt = kPawn; pt <= kKing; pt++) {
-        if (pos->occupied[pt] & bb) return pt;
-    }
-
-    return kNone;
+    return pos->pieces[square];
 }
 
 char board_piece_at(const struct board *pos, uint8_t square) {
@@ -32,14 +26,12 @@ char board_piece_at(const struct board *pos, uint8_t square) {
 
 void board_remove_piece_at(struct board *pos, uint8_t square) {
     uint64_t mask = ~BB_SQUARE(square);
-
-    for (int color = 0; color <= 1; color++) {
-        pos->occupied_co[color] &= mask;
-    }
-
-    for (piece_type_t pt = kAll; pt <= kKing; pt++) {
-        pos->occupied[pt] &= mask;
-    }
+    piece_type_t pt = pos->pieces[square];
+    pos->pieces[square] = kNone;
+    pos->occupied_co[0] &= mask;
+    pos->occupied_co[1] &= mask;
+    pos->occupied[pt] &= mask;
+    pos->occupied[kAll] &= mask;
 }
 
 void board_set_piece_at(board_t *pos, square_t square, piece_type_t pt, color_t color) {
@@ -49,6 +41,7 @@ void board_set_piece_at(board_t *pos, square_t square, piece_type_t pt, color_t 
         uint64_t bb = BB_SQUARE(square);
         pos->occupied_co[color] |= bb;
         pos->occupied[pt] |= bb;
+        pos->pieces[square] = pt;
     }
 }
 
@@ -67,31 +60,16 @@ void board_print(const struct board *pos) {
 void board_clear(board_t *pos) {
     memset(pos, 0, sizeof(board_t));
 
-    pos->turn = true;
+    pos->turn = kWhite;
 
     pos->castling = 0;
 
-    pos->halfmove_clock = 0;
-    pos->fullmove_number = 1;
+    pos->hmvc = 0;
+    pos->fmvn = 1;
 }
 
 void board_reset(struct board *pos) {
-    pos->occupied_co[kWhite] = BB_RANK_1 | BB_RANK_2;
-    pos->occupied_co[kBlack] = BB_RANK_7 | BB_RANK_8;
-    pos->occupied[kKing] = BB_E1 | BB_E8;
-    pos->occupied[kQueen] = BB_D1 | BB_D8;
-    pos->occupied[kRook] = BB_A1 | BB_A8 | BB_H1 | BB_H8;
-    pos->occupied[kBishop] = BB_C1 | BB_C8 | BB_F1 | BB_F8;
-    pos->occupied[kKnight] = BB_B1 | BB_B8 | BB_G1 | BB_G8;
-    pos->occupied[kPawn] = BB_RANK_2 | BB_RANK_7;
-
-    pos->turn = kWhite;
-
-    pos->ep_square = 0;
-    pos->castling = pos->occupied[kRook];
-
-    pos->halfmove_clock = 0;
-    pos->fullmove_number = 1;
+    board_set_fen(pos, "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
 }
 
 char *board_board_fen(const struct board *pos, char *fen) {
@@ -154,26 +132,19 @@ char *board_shredder_fen(const struct board *pos, char *fen) {
     else *fen++ = '-';
 
     *fen++ = ' ';
-    int hmvc = (pos->halfmove_clock > 9999) ? 9999 : pos->halfmove_clock;
+    int hmvc = (pos->hmvc > 9999) ? 9999 : pos->hmvc;
     fen += sprintf(fen, "%d", hmvc);
 
     *fen++ = ' ';
-    int fmvn = (pos->fullmove_number > 9999) ? 9999 : pos->fullmove_number;
+    int fmvn = (pos->fmvn > 9999) ? 9999 : pos->fmvn;
     fen += sprintf(fen, "%d", fmvn);
 
     return fen;
 }
 
 bool board_set_fen(struct board *pos, const char *fen) {
-    uint64_t black = 0, white = 0;
-    uint64_t kings = 0, queens = 0, rooks = 0, bishops = 0,
-             knights = 0, pawns = 0;
-
-    uint64_t castling = 0;
-    bool turn = false;
-    uint8_t ep_square = 0;
-
-    int hmvc = 0, fmvn = 0;
+    board_t updated;
+    memset(&updated, 0, sizeof(board_t));
 
     uint64_t promoted = 0;
 
@@ -184,17 +155,18 @@ bool board_set_fen(struct board *pos, const char *fen) {
         int file = 0;
 
         for (; file <= 7; file++) {
-            uint64_t bb = BB_SQUARE(square(file, rank));
             char c = *fen++;
 
             if (c == '~') {
-                promoted |= bb;
+                promoted |= BB_SQUARE(square(file, rank));
                 c = *fen++;
             }
 
-            if (c >= 'a' && c <= 'z') black |= bb;
-            else if (c >= 'A' && c <= 'Z') white |= bb;
-            else if (promoted && bb) return false;
+            color_t color;
+
+            if (c >= 'a' && c <= 'z') color = kBlack;
+            else if (c >= 'A' && c <= 'Z') color = kWhite;
+            else if (promoted & BB_SQUARE(square(file, rank))) return false;
 
             if (c >= '1' && c <= '8') {
                 if (last_was_number) return false;
@@ -205,12 +177,8 @@ bool board_set_fen(struct board *pos, const char *fen) {
                 last_was_number = false;
             }
 
-            if (c == 'k' || c == 'K') kings |= bb;
-            else if (c == 'q' || c == 'Q') queens |= bb;
-            else if (c == 'r' || c == 'R') rooks |= bb;
-            else if (c == 'b' || c == 'B') bishops |= bb;
-            else if (c == 'n' || c == 'N') knights |= bb;
-            else if (c == 'p' || c == 'P') pawns |= bb;
+            piece_type_t pt = piece_type_from_symbol(c);
+            if (pt) board_set_piece_at(&updated, square(file, rank), pt, color);
             else return false;
         }
 
@@ -229,40 +197,39 @@ bool board_set_fen(struct board *pos, const char *fen) {
     // 2. Turn.
 
     char c = *fen++;
-    if (c == 'w') turn = true;
-    else if (c == 'b') turn = false;
+    if (c == 'w') updated.turn = kWhite;
+    else if (c == 'b') updated.turn = kBlack;
     else return false;
     if (*fen++ != ' ') return false;
 
     // 3. Castling
-
     c = *fen++;
     if (c != '-') {
         do {
             uint64_t backrank, king, candidates;
             if (c >= 'a' && c <= 'z') {
                 backrank = BB_RANK_8;
-                king = kings & black & BB_RANK_8;
-                candidates = rooks & black & BB_RANK_8;
+                king = board_pieces(&updated, kKing, kBlack) & BB_RANK_8;
+                candidates = board_pieces(&updated, kRook, kBlack) & BB_RANK_8;
             } else {
                 backrank = BB_RANK_1;
-                king = kings & white & BB_RANK_1;
-                candidates = rooks & white & BB_RANK_1;
+                king = board_pieces(&updated, kKing, kWhite) & BB_RANK_1;
+                candidates = board_pieces(&updated, kRook, kWhite) & BB_RANK_1;
             }
 
-            if (c >= 'a' && c <= 'h') castling |= BB_SQUARE(square(c - 'a', 7));
-            else if (c >= 'A' && c <= 'H') castling |= BB_SQUARE(square(c - 'A', 0));
+            if (c >= 'a' && c <= 'h') updated.castling |= BB_SQUARE(square(c - 'a', 7));
+            else if (c >= 'A' && c <= 'H') updated.castling |= BB_SQUARE(square(c - 'A', 0));
             else if (c == 'q' || c == 'Q') {
                 if (king && candidates && bb_lsb(candidates) < bb_lsb(king)) {
-                    castling |= candidates & -candidates;
+                    updated.castling |= candidates & -candidates;
                 } else {
-                    castling |= BB_FILE_A & backrank;
+                    updated.castling |= BB_FILE_A & backrank;
                 }
             } else if (c == 'k' || c == 'K') {
                 if (king && candidates && bb_lsb(king) < bb_msb(candidates)) {
-                    castling |= 1ULL << bb_msb(candidates);
+                    updated.castling |= 1ULL << bb_msb(candidates);
                 } else {
-                    castling |= BB_FILE_H & backrank;
+                    updated.castling |= BB_FILE_H & backrank;
                 }
             } else return false;
         } while ((c = *fen++) != ' ');
@@ -272,12 +239,12 @@ bool board_set_fen(struct board *pos, const char *fen) {
 
     c = *fen++;
     if (c != '-') {
-        if (c >= 'a' && c <= 'h') ep_square = c - 'a';
+        if (c >= 'a' && c <= 'h') updated.ep_square = c - 'a';
         else return false;
 
         c = *fen++;
-        if (c == '3') ep_square += 2 * 8;
-        else if (c == '6') ep_square += 5 * 8;
+        if (c == '3') updated.ep_square += 2 * 8;
+        else if (c == '6') updated.ep_square += 5 * 8;
         else return false;
     }
     if (*fen++ != ' ') return false;
@@ -286,45 +253,29 @@ bool board_set_fen(struct board *pos, const char *fen) {
 
     c = *fen++;
     do {
-        if (c >= '0' && c <= '9') hmvc = hmvc * 10 + c - '0';
+        if (c >= '0' && c <= '9') updated.hmvc = updated.hmvc * 10 + c - '0';
         else return false;
 
-        if (hmvc > 9999) hmvc = 9999;
+        if (updated.hmvc > 9999) updated.hmvc = 9999;
     } while ((c = *fen++) != ' ');
 
     // 6. Fullmove number.
 
     c = *fen++;
     do {
-        if (c >= '0' && c <= '9') fmvn = fmvn * 10 + c - '0';
+        if (c >= '0' && c <= '9') updated.fmvn = updated.fmvn * 10 + c - '0';
         else return false;
 
-        if (fmvn > 9999) fmvn = 9999;
+        if (updated.fmvn > 9999) updated.fmvn = 9999;
     } while ((c = *fen++) && c != ' ');
-    if (fmvn < 1) fmvn = 1;
+    if (updated.fmvn < 1) updated.fmvn = 1;
 
     if (c) {
         return false;
     }
 
     // Commit board state.
-
-    pos->occupied_co[1] = white;
-    pos->occupied_co[0] = black;
-    pos->occupied[kKing] = kings;
-    pos->occupied[kQueen] = queens;
-    pos->occupied[kRook] = rooks;
-    pos->occupied[kBishop] = bishops;
-    pos->occupied[kKnight] = knights;
-    pos->occupied[kPawn] = pawns;
-
-    pos->turn = turn;
-    pos->ep_square = ep_square;
-    pos->castling = castling;
-
-    pos->halfmove_clock = hmvc;
-    pos->fullmove_number = fmvn;
-
+    *pos = updated;
     return true;
 }
 
@@ -364,8 +315,8 @@ uint64_t board_attacks_from(const struct board *pos, uint8_t square) {
     }
 }
 
-uint64_t board_checkers(const struct board *pos, bool turn) {
-    uint64_t king = pos->occupied_co[turn] & pos->occupied[kKing];
+uint64_t board_checkers(const board_t *pos, color_t turn) {
+    uint64_t king = board_pieces(pos, kKing, turn);
     if (!king) return 0;
 
     return board_attacks_to(pos, bb_lsb(king)) & pos->occupied_co[!turn];
@@ -597,12 +548,12 @@ void board_move(board_t *pos, move_t move) {
     uint64_t them = pos->occupied_co[!pos->turn];
 
     // Increment fullmove number.
-    if (!pos->turn) pos->fullmove_number++;
+    if (!pos->turn) pos->fmvn++;
 
     // On a null move simply swap turns and reset the en passant square.
     if (!move) {
         pos->turn = !pos->turn;
-        pos->halfmove_clock++;
+        pos->hmvc++;
         pos->ep_square = 0;
         return;
     }
@@ -610,9 +561,9 @@ void board_move(board_t *pos, move_t move) {
     // Update the half move clock.
     piece_type_t piece = board_piece_type_at(pos, move_from(move));
     if (piece == kPawn || BB_SQUARE(move_to(move)) & them) {
-        pos->halfmove_clock = 0;
+        pos->hmvc = 0;
     } else {
-        pos->halfmove_clock++;
+        pos->hmvc++;
     }
 
     // Update castling rights.
