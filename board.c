@@ -76,8 +76,8 @@ void board_clear(board_t *pos) {
 }
 
 void board_reset(struct board *pos) {
-    pos->occupied_co[1] = BB_RANK_1 | BB_RANK_2;
-    pos->occupied_co[0] = BB_RANK_7 | BB_RANK_8;
+    pos->occupied_co[kWhite] = BB_RANK_1 | BB_RANK_2;
+    pos->occupied_co[kBlack] = BB_RANK_7 | BB_RANK_8;
     pos->occupied[kKing] = BB_E1 | BB_E8;
     pos->occupied[kQueen] = BB_D1 | BB_D8;
     pos->occupied[kRook] = BB_A1 | BB_A8 | BB_H1 | BB_H8;
@@ -85,7 +85,7 @@ void board_reset(struct board *pos) {
     pos->occupied[kKnight] = BB_B1 | BB_B8 | BB_G1 | BB_G8;
     pos->occupied[kPawn] = BB_RANK_2 | BB_RANK_7;
 
-    pos->turn = true;
+    pos->turn = kWhite;
 
     pos->ep_square = 0;
     pos->castling = pos->occupied[kRook];
@@ -352,16 +352,16 @@ uint64_t board_attacks_to(const struct board *pos, uint8_t square) {
 
 uint64_t board_attacks_from(const struct board *pos, uint8_t square) {
     uint64_t bb = BB_SQUARE(square);
-    uint64_t occupied = pos->occupied_co[0] | pos->occupied_co[1];
-    switch (board_piece_at(pos, square)) {
+    uint64_t occupied = pos->occupied_co[0] | pos->occupied_co[1]; // TODO
+    switch (board_piece_type_at(pos, square)) {
         case kBishop: return attacks_bishop(square, occupied);
         case kRook: return attacks_rook(square, occupied);
         case kQueen: return attacks_bishop(square, occupied) | attacks_rook(square, occupied);
         case kKnight: return attacks_knight(square);
         case kKing: return attacks_king(square);
         case kPawn: return attacks_pawn(square, (pos->occupied_co[0] & bb) == 0);
+        default: return 0;
     }
-    return 0;
 }
 
 uint64_t board_checkers(const struct board *pos, bool turn) {
@@ -522,12 +522,12 @@ move_t *board_castling_moves(const board_t *pos, move_t *moves, uint64_t from_ma
 static move_t *make_pawn_moves(const board_t *pos, square_t from, square_t to, move_t *moves) {
     int rank = square_rank(to);
     if (rank == 0 || rank == 7) {
-        *moves++ = move_make(from, to, 'q');
-        *moves++ = move_make(from, to, 'r');
-        *moves++ = move_make(from, to, 'b');
-        *moves++ = move_make(from, to, 'n');
+        *moves++ = move_make(from, to, kQueen);
+        *moves++ = move_make(from, to, kRook);
+        *moves++ = move_make(from, to, kBishop);
+        *moves++ = move_make(from, to, kKnight);
     } else {
-        *moves++ = move_make(from, to, 0);
+        *moves++ = move_make(from, to, kNone);
     }
     return moves;
 }

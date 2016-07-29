@@ -13,8 +13,7 @@ char *move_uci(move_t move, char *uci) {
     } else {
         uci = square_name(move_from(move), uci);
         uci = square_name(move_to(move), uci);
-        char piece_type = move_piece_type(move);
-        if (piece_type) *uci++ = piece_type;
+        *uci++ = piece_symbol(move_piece_type(move), kBlack);
     }
     *uci = '\0';
     return uci;

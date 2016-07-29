@@ -180,7 +180,7 @@ void test_legal_promotion() {
     move_t moves[255];
     move_t *end = board_legal_moves(&pos, moves, BB_ALL, BB_ALL);
 
-    move_t needle = move_make(SQ_B7, SQ_B8, 'q');
+    move_t needle = move_make(SQ_B7, SQ_B8, kQueen);
     bool found = false;
     bool found_uci = false;
     for (move_t *current = moves; current < end; current++) {
