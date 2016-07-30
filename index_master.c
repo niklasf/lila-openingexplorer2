@@ -103,7 +103,9 @@ const char *visit_master_pgn(const char *game_id, size_t game_id_size,
 
                 board_move(&pos, move);
             } else {
-                printf("illegal token: %s\n", token);
+                char fen[255];
+                board_shredder_fen(&pos, fen);
+                printf("illegal token: %s in %s\n", token, fen);
             }
         }
 

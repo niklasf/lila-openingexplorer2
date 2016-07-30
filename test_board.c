@@ -218,6 +218,10 @@ void test_board_parse_san() {
     assert(board_set_fen(&pos, "r1bqkb1r/pppp1ppp/2n2n2/4p3/2B1P3/2N2N2/PPPP1PPP/R1BQK2R b KQkq - 5 4"));
     assert(board_parse_san(&pos, "Nxe4", &move));
     assert(move == move_make(SQ_F6, SQ_E4, 0));
+
+    assert(board_set_fen(&pos, "r3r2R/pppb1kP1/n2p4/3Pp3/2P1P3/2N1K3/PP3P2/6R1 w - - 3 23"));
+    assert(board_parse_san(&pos, "g8=Q+", &move));
+    assert(move == move_make(SQ_G7, SQ_G8, kQueen));
 }
 
 void test_board_san() {
