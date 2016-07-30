@@ -172,7 +172,14 @@ void get_master(struct evhttp_request *req, void *context) {
     // Add top games.
     evbuffer_add_printf(res, "  \"topGames\": [\n");
     for (size_t i = 0; i < record->num_refs; i++) {
-        // TODO
+        char game_id[9];
+        strncpy(game_id, record->refs[i].game_id, 8);
+
+        evbuffer_add_printf(res, "    {\n");
+        // TODO: winner, white.name, white.rating, black.name, black.rating, -avg rating
+        evbuffer_add_printf(res, "      \"id\": \"%s\",\n", game_id);
+        evbuffer_add_printf(res, "      \"TODO\": %d\n", record->refs[i].average_rating);
+        evbuffer_add_printf(res, "    }%s\n", (i < record->num_refs - 1) ? "," : "");
     }
     evbuffer_add_printf(res, "  ]\n");
 
