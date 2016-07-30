@@ -25,7 +25,7 @@ const char *merge_master_full(const char *hash, size_t hash_size,
     struct master_record *record = master_record_new();
     decode_master_record((const uint8_t *) buf, record);
     master_record_add_move(record, delta->move, &delta->ref, delta->result);
-    master_record_sort(record);
+    master_record_print(record);
 
     char *end = (char *) encode_master_record((uint8_t *) master_entry_buffer, record);
     *sp = end - master_entry_buffer;

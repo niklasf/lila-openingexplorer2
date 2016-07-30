@@ -133,7 +133,6 @@ void get_master(struct evhttp_request *req, void *context) {
 
     struct master_record *record = master_record_new();
     decode_master_record((const uint8_t *) encoded_record, record);
-    master_record_sort(record);
 
     unsigned long average_rating_sum = master_record_average_rating_sum(record);
     unsigned long total_white = master_record_white(record);

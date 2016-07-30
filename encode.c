@@ -114,8 +114,9 @@ void master_record_add_move(struct master_record *record,
 
     if (record->num_refs < MASTER_MAX_REFS) {
         record->refs[record->num_refs++] = *ref;
-    } else {
-        // TODO: Replace lowest game.
+    } else if (record->refs[MASTER_MAX_REFS - 1].average_rating <= ref->average_rating) {
+        // Replace lowest rated game.
+        record->refs[MASTER_MAX_REFS - 1] = *ref;
     }
 
     for (size_t i = 0; i < record->num_moves; i++) {
@@ -229,8 +230,17 @@ static int cmp_move_stats(const void *l, const void *r) {
     else return 0;
 }
 
+static int cmp_master_refs(const void *l, const void *r) {
+    const struct master_ref *a = (struct master_ref *) l;
+    const struct master_ref *b = (struct master_ref *) r;
+    if (a->average_rating < b->average_rating) return 1;
+    else if (a->average_rating > b->average_rating) return -1;
+    else return 0;
+}
+
 void master_record_sort(struct master_record *record) {
     qsort(record->moves, record->num_moves, sizeof(struct move_stats), cmp_move_stats);
+    qsort(record->refs, record->num_refs, sizeof(struct master_ref), cmp_master_refs);
 }
 
 unsigned long master_record_white(const struct master_record *record) {
