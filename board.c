@@ -41,6 +41,7 @@ void board_set_piece_at(board_t *pos, square_t square, piece_type_t pt, color_t 
         uint64_t bb = BB_SQUARE(square);
         pos->occupied_co[color] |= bb;
         pos->occupied[pt] |= bb;
+        pos->occupied[kAll] |= bb;
         pos->pieces[square] = pt;
     }
 }
@@ -281,7 +282,7 @@ bool board_set_fen(struct board *pos, const char *fen) {
 
 bool board_is_insufficient_material(const struct board *pos) {
     if (pos->occupied[kPawn] || pos->occupied[kRook] || pos->occupied[kQueen]) return false;
-    else if (bb_popcount(pos->occupied_co[0] | pos->occupied_co[1]) <= 3) return true;
+    else if (bb_popcount(pos->occupied[kAll]) <= 3) return true;
     else if (pos->occupied[kKnight]) return false;
     else if (!(pos->occupied[kBishop] & BB_DARK_SQUARES)) return true;
     else if (!(pos->occupied[kBishop] & BB_LIGHT_SQUARES)) return true;
@@ -289,7 +290,7 @@ bool board_is_insufficient_material(const struct board *pos) {
 }
 
 uint64_t board_attacks_to(const struct board *pos, uint8_t square) {
-    uint64_t occupied = pos->occupied_co[0] | pos->occupied_co[1];
+    uint64_t occupied = pos->occupied[kAll];
 
     uint64_t attacks = 0;
     attacks |= attacks_rook(square, occupied) & (pos->occupied[kRook] | pos->occupied[kQueen]);
@@ -303,7 +304,7 @@ uint64_t board_attacks_to(const struct board *pos, uint8_t square) {
 
 uint64_t board_attacks_from(const struct board *pos, uint8_t square) {
     uint64_t bb = BB_SQUARE(square);
-    uint64_t occupied = pos->occupied_co[0] | pos->occupied_co[1]; // TODO
+    uint64_t occupied = pos->occupied[kAll];
     switch (board_piece_type_at(pos, square)) {
         case kBishop: return attacks_bishop(square, occupied);
         case kRook: return attacks_rook(square, occupied);
@@ -450,7 +451,7 @@ move_t *board_castling_moves(const board_t *pos, move_t *moves, uint64_t from_ma
         uint64_t not_attacked_for_king = empty_for_king;
         empty_for_king &= ~rook_bb;
 
-        if ((pos->occupied_co[0] | pos->occupied_co[1]) & (empty_for_king | empty_for_rook)) {
+        if (pos->occupied[kAll] & (empty_for_king | empty_for_rook)) {
             continue;
         }
 
