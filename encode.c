@@ -146,7 +146,10 @@ void master_record_add_move(struct master_record *record,
 
 uint8_t *encode_master_record(uint8_t *buffer, const struct master_record *record) {
     buffer = encode_uint(buffer, record->num_refs);
-    buffer = encode_uint(buffer, record->num_moves);
+
+    if (record->num_refs > 1) {
+        buffer = encode_uint(buffer, record->num_moves);
+    }
 
     for (size_t i = 0; i < record->num_moves; i++) {
         buffer = encode_uint16(buffer, record->moves[i].move);
@@ -169,8 +172,10 @@ const uint8_t *decode_master_record(const uint8_t *buffer, struct master_record 
     buffer = decode_uint(buffer, &num_refs);
     record->num_refs = num_refs;
 
-    unsigned long num_moves;
-    buffer = decode_uint(buffer, &num_moves);
+    unsigned long num_moves = 1;
+    if (num_refs > 1) {
+        buffer = decode_uint(buffer, &num_moves);
+    }
     record->num_moves = num_moves;
 
     record->moves = realloc(record->moves, sizeof(struct move_stats) * record->num_moves);
