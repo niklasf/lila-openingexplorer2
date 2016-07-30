@@ -650,7 +650,7 @@ bool board_parse_san(const board_t *pos, const char *san, move_t *move) {
         return true;
     }
 
-    // TODO: Chess960 support and validation.
+    // Optional TODO: Chess960 support and validation.
     if (*san == 'O') {
         if (strcmp("O-O", san) == 0 || strcmp("O-O+", san) == 0 || strcmp("O-O#", san) == 0) {
             // Kingside castling.
@@ -664,8 +664,6 @@ bool board_parse_san(const board_t *pos, const char *san, move_t *move) {
             return false;
         }
     }
-
-    // TODO: Castling.
 
     // Select piece type.
     uint64_t from_mask;
@@ -844,6 +842,18 @@ char *board_san(const board_t *pos, move_t move, char *san) {
     return san;
 }
 
+move_t board_legal_en_passant(const board_t *pos) {
+    if (!pos->ep_square) return 0;
+
+    move_t moves[16];
+    move_t *end = board_legal_moves(pos, moves, pos->occupied[kPawn], BB_SQUARE(pos->ep_square));
+    for (move_t *current = moves; current < end; current++) {
+        return *current;
+    }
+
+    return 0;
+}
+
 uint64_t board_zobrist_hash(const board_t *pos, const uint64_t array[]) {
     uint64_t zobrist_hash = 0;
 
@@ -858,14 +868,16 @@ uint64_t board_zobrist_hash(const board_t *pos, const uint64_t array[]) {
         }
     }
 
-    // TODO: Chess960 Castling.
+    // Optional TODO: Chess960 Castling.
     uint64_t castling = board_castling_rights(pos);
     if (castling & BB_H1) zobrist_hash ^= array[768];
     if (castling & BB_A1) zobrist_hash ^= array[768 + 1];
     if (castling & BB_H8) zobrist_hash ^= array[768 + 2];
     if (castling & BB_A8) zobrist_hash ^= array[768 + 3];
 
-    // TODO: En passant
+    // En passant
+    move_t ep = board_legal_en_passant(pos);
+    if (ep) zobrist_hash ^= array[772 + square_file(move_to(ep))];
 
     // Turn.
     if (pos->turn) zobrist_hash ^= array[780];
