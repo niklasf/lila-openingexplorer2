@@ -109,14 +109,7 @@ void get_master(struct evhttp_request *req, void *context) {
         evhttp_send_error(req, HTTP_BADREQUEST, "Invalid FEN");
     }
 
-    uint64_t zobrist_hash = board_zobrist_hash(&pos, POLYGLOT);
-
-    size_t record_size;
-    char *encoded_record = kcdbget(master_db, (const char *) &zobrist_hash, 8, &record_size);
-    if (!encoded_record) {
-        evhttp_send_error(req, HTTP_NOTFOUND, "Position Not Found");
-        return;
-    }
+    printf("master: %.255s\n", fen);
 
     struct evbuffer *res = evbuffer_new();
     if (!res) {
@@ -136,8 +129,14 @@ void get_master(struct evhttp_request *req, void *context) {
         evhttp_add_header(headers, "Content-Type", "application/json");
     }
 
+    uint64_t zobrist_hash = board_zobrist_hash(&pos, POLYGLOT);
+
     struct master_record *record = master_record_new();
-    decode_master_record((const uint8_t *) encoded_record, record);
+    size_t record_size;
+    char *encoded_record = kcdbget(master_db, (const char *) &zobrist_hash, 8, &record_size);
+    if (encoded_record) {
+        decode_master_record((const uint8_t *) encoded_record, record);
+    }
 
     unsigned long average_rating_sum = master_record_average_rating_sum(record);
     unsigned long total_white = master_record_white(record);
@@ -151,7 +150,8 @@ void get_master(struct evhttp_request *req, void *context) {
     evbuffer_add_printf(res, "  \"white\": %lu,\n", total_white);
     evbuffer_add_printf(res, "  \"draws\": %lu,\n", total_draws);
     evbuffer_add_printf(res, "  \"black\": %lu,\n", total_black);
-    evbuffer_add_printf(res, "  \"averageRating\": %lu,\n", average_rating_sum / total);
+    if (total) evbuffer_add_printf(res, "  \"averageRating\": %lu,\n", average_rating_sum / total);
+    else evbuffer_add_printf(res, "  \"averageRating\": null,\n");
 
     // Add move list.
     evbuffer_add_printf(res, "  \"moves\": [\n");
@@ -168,7 +168,11 @@ void get_master(struct evhttp_request *req, void *context) {
         evbuffer_add_printf(res, "      \"white\": %lu,\n", record->moves[i].white);
         evbuffer_add_printf(res, "      \"draws\": %lu,\n", record->moves[i].draws);
         evbuffer_add_printf(res, "      \"black\": %lu,\n", record->moves[i].black);
-        evbuffer_add_printf(res, "      \"averageRating\": %lu\n", record->moves[i].average_rating_sum / move_total);
+        if (move_total) {
+            evbuffer_add_printf(res, "      \"averageRating\": %lu\n", record->moves[i].average_rating_sum / move_total);
+        } else {
+            evbuffer_add_printf(res, "      \"averageRating\": null\n");
+        }
         evbuffer_add_printf(res, "    }%s\n", (i < record->num_moves - 1 && i < moves - 1) ? "," : "");
     }
 
