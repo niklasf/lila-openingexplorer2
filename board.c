@@ -733,16 +733,11 @@ bool board_parse_san(const board_t *pos, const char *san, move_t *move) {
     if (from_file) from_mask &= BB_FILE(from_file - 'a');
     if (from_rank) from_mask &= BB_RANK(from_rank - '1');
 
-    char promotion = 0;
+    piece_type_t promotion = kNone;
     if (*san == '=') {
         san++;
-        if (*san == 'K' || *san == 'k') promotion = 'k';
-        else if (*san == 'Q' || *san == 'q') promotion = 'q';
-        else if (*san == 'R' || *san == 'r') promotion = 'r';
-        else if (*san == 'B' || *san == 'b') promotion = 'b';
-        else if (*san == 'N' || *san == 'n') promotion = 'n';
-        else return false;
-        san++;
+        promotion = piece_type_from_symbol(*san++);
+        if (!promotion) return false;
     }
 
     // Ignore # and + at the end.
