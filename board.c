@@ -771,6 +771,10 @@ bool board_is_capture(const board_t *pos, move_t move) {
     return BB_SQUARE(move_to(move)) & them || board_is_en_passant(pos, move);
 }
 
+bool board_is_castling(const board_t *pos, move_t move) {
+    return BB_SQUARE(move_to(move)) & pos->occupied_co[pos->turn];
+}
+
 char *board_san(const board_t *pos, move_t move, char *san) {
     if (!move) {
         strcpy(san, "--");
@@ -782,7 +786,22 @@ char *board_san(const board_t *pos, move_t move, char *san) {
     bool check = board_checkers(&pos_after, pos_after.turn);
     bool checkmate = check && board_is_checkmate(&pos_after);
 
-    // TODO: Castling
+    // Castling.
+    if (board_is_castling(pos, move)) {
+        *san++ = 'O';
+        *san++ = '-';
+        *san++ = 'O';
+
+        if (move_to(move) < move_from(move)) {
+            *san++ = '-';
+            *san++ = 'O';
+        }
+
+        if (checkmate) *san++ = '#';
+        else if (check) *san++ = '+';
+        *san = 0;
+        return san;
+    }
 
     piece_type_t piece_type = board_piece_type_at(pos, move_from(move));
     if (piece_type != kPawn) {
