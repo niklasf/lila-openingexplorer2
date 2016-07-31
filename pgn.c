@@ -15,6 +15,7 @@ struct pgn_game_info *pgn_game_info_read(char *pgn, char **saveptr_pgn) {
         else if (0 == strcmp(line, "[Result \"0-1\"]")) game_info->result = -1;
         else if (1 == sscanf(line, "[WhiteElo \"%d\"]", &game_info->white_elo)) continue;
         else if (1 == sscanf(line, "[BlackElo \"%d\"]", &game_info->black_elo)) continue;
+        else if (1 == sscanf(line, "[Date \"%d", &game_info->year)) continue;
         else if (strncmp("[White \"", line, strlen("[White \"")) == 0 && line[strlen(line) - 2] == '"') {
             game_info->white = strndup(line + strlen("[White \""), strlen(line) - strlen("[White \"") - 2);
         }

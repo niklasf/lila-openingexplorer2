@@ -194,7 +194,8 @@ void get_master(struct evhttp_request *req, void *context) {
         evbuffer_add_printf(res, "      \"black\": {\n");
         evbuffer_add_printf(res, "        \"name\": \"%s\",\n", game_info->black); // XXX TODO !
         evbuffer_add_printf(res, "        \"rating\": %d\n", game_info->black_elo);
-        evbuffer_add_printf(res, "      }\n");
+        evbuffer_add_printf(res, "      },\n");
+        evbuffer_add_printf(res, "      \"year\": %d\n", game_info->year);
         evbuffer_add_printf(res, "    }%s\n", (i < record->num_refs - 1) ? "," : "");
     }
     evbuffer_add_printf(res, "  ]\n");
