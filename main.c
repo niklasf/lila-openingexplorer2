@@ -165,14 +165,14 @@ void get_master(struct evhttp_request *req, void *context) {
         evbuffer_add_printf(res, "      \"draws\": %lu,\n", record->moves[i].draws);
         evbuffer_add_printf(res, "      \"black\": %lu,\n", record->moves[i].black);
         evbuffer_add_printf(res, "      \"averageRating\": %lu\n", record->moves[i].average_rating_sum / move_total);
-        evbuffer_add_printf(res, "    }%s\n", (i < record->num_moves - 1) ? "," : "");
+        evbuffer_add_printf(res, "    }%s\n", (i < record->num_moves - 1 && i < moves - 1) ? "," : "");
     }
 
     evbuffer_add_printf(res, "  ],\n");
 
     // Add top games.
     evbuffer_add_printf(res, "  \"topGames\": [\n");
-    for (size_t i = 0; i < record->num_refs; i++) {
+    for (size_t i = 0; i < record->num_refs && i < topGames; i++) {
         char game_id[9];
         strncpy(game_id, record->refs[i].game_id, 8);
 
@@ -196,7 +196,7 @@ void get_master(struct evhttp_request *req, void *context) {
         evbuffer_add_printf(res, "        \"rating\": %d\n", game_info->black_elo);
         evbuffer_add_printf(res, "      },\n");
         evbuffer_add_printf(res, "      \"year\": %d\n", game_info->year);
-        evbuffer_add_printf(res, "    }%s\n", (i < record->num_refs - 1) ? "," : "");
+        evbuffer_add_printf(res, "    }%s\n", (i < record->num_refs - 1 && i < topGames - 1) ? "," : "");
     }
     evbuffer_add_printf(res, "  ]\n");
 
