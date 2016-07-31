@@ -17,6 +17,8 @@
 static KCDB *master_pgn_db;
 static KCDB *master_db;
 
+static bool cors = true;
+
 void get_master_pgn(struct evhttp_request *req, void *context) {
     if (evhttp_request_get_command(req) != EVHTTP_REQ_GET) {
         evhttp_send_error(req, HTTP_BADMETHOD, "Method Not Allowed");
@@ -122,9 +124,11 @@ void get_master(struct evhttp_request *req, void *context) {
         abort();
     }
 
-    // Set Content-Type.
+    // CORS.
     struct evkeyvalq *headers = evhttp_request_get_output_headers(req);
+    if (cors) evhttp_add_header(headers, "Access-Control-Allow-Origin", "*");
 
+    // Set Content-Type.
     if (jsonp && strlen(jsonp)) {
         evhttp_add_header(headers, "Content-Type", "application/javascript");
         evbuffer_add_printf(res, "%s(", jsonp);
