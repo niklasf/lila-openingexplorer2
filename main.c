@@ -12,6 +12,7 @@
 #include "attacks.h"
 #include "board.h"
 #include "encode.h"
+#include "pgn.h"
 
 static KCDB *master_pgn_db;
 static KCDB *master_db;
@@ -175,10 +176,25 @@ void get_master(struct evhttp_request *req, void *context) {
         char game_id[9];
         strncpy(game_id, record->refs[i].game_id, 8);
 
+        size_t pgn_size;
+        char *pgn = kcdbget(master_pgn_db, game_id, 8, &pgn_size);
+        if (!pgn) continue;
+
+        char *save_ptr;
+        struct pgn_game_info *game_info = pgn_game_info_read(pgn, &save_ptr);
+        if (!game_info->white || !game_info->black) continue;
+
         evbuffer_add_printf(res, "    {\n");
         // TODO: winner, white.name, white.rating, black.name, black.rating, -avg rating
         evbuffer_add_printf(res, "      \"id\": \"%s\",\n", game_id);
-        evbuffer_add_printf(res, "      \"TODO\": %d\n", record->refs[i].average_rating);
+        evbuffer_add_printf(res, "      \"white\": {\n");
+        evbuffer_add_printf(res, "        \"name\": \"%s\",\n", game_info->white); // XXX TODO !
+        evbuffer_add_printf(res, "        \"rating\": %d\n", game_info->white_elo);
+        evbuffer_add_printf(res, "      },\n");
+        evbuffer_add_printf(res, "      \"black\": {\n");
+        evbuffer_add_printf(res, "        \"name\": \"%s\",\n", game_info->black); // XXX TODO !
+        evbuffer_add_printf(res, "        \"rating\": %d\n", game_info->black_elo);
+        evbuffer_add_printf(res, "      }\n");
         evbuffer_add_printf(res, "    }%s\n", (i < record->num_refs - 1) ? "," : "");
     }
     evbuffer_add_printf(res, "  ]\n");

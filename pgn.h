@@ -5,22 +5,19 @@
 #include <stdbool.h>
 
 struct pgn_game_info {
-    char Event[255];
-    char Site[255];
-    char Date[255];
-    char Round[255];
-    char White[255];
-    char Black[255];
+    char *white;
+    char *black;
 
-    unsigned WhiteElo;
-    unsigned BlackElo;
+    int white_elo;
+    int black_elo;
 
     unsigned year;
-    char result;
+
+    int result;
 };
 
-void pgn_game_info_reset(struct pgn_game_info *game_info);
+struct pgn_game_info *pgn_game_info_read(char *pgn, char **saveptr_pgn);
 
-bool pgn_read_game(FILE *file, struct pgn_game_info *game_info);
+void pgn_game_info_free(struct pgn_game_info *game_info);
 
 #endif  // #ifndef PGN_H_
