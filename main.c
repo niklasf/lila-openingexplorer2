@@ -191,6 +191,7 @@ void get_master(struct evhttp_request *req, void *context) {
         evbuffer_add_printf(res, "    {\n");
         // TODO: winner, white.name, white.rating, black.name, black.rating, -avg rating
         evbuffer_add_printf(res, "      \"id\": \"%s\",\n", game_id);
+        evbuffer_add_printf(res, "      \"winner\": \"%s\",\n", game_info->result ? (game_info->result > 0 ? "white" : "black") : "draw");
         evbuffer_add_printf(res, "      \"white\": {\n");
         evbuffer_add_printf(res, "        \"name\": \"%s\",\n", game_info->white); // XXX TODO !
         evbuffer_add_printf(res, "        \"rating\": %d\n", game_info->white_elo);
