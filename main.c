@@ -18,6 +18,7 @@ static KCDB *master_pgn_db;
 static KCDB *master_db;
 
 static bool cors = true;
+static bool verbose = true;
 
 void get_master_pgn(struct evhttp_request *req, void *context) {
     if (evhttp_request_get_command(req) != EVHTTP_REQ_GET) {
@@ -109,7 +110,7 @@ void get_master(struct evhttp_request *req, void *context) {
         evhttp_send_error(req, HTTP_BADREQUEST, "Invalid FEN");
     }
 
-    printf("master: %.255s\n", fen);
+    if (verbose) printf("master: %.255s\n", fen);
 
     struct evbuffer *res = evbuffer_new();
     if (!res) {
