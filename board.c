@@ -761,7 +761,7 @@ bool board_parse_san(const board_t *pos, const char *san, move_t *move) {
 bool board_is_en_passant(const board_t *pos, move_t move) {
     int diff = abs(move_to(move) - move_from(move));
     if (diff != 7 && diff != 9) return false;
-    if (pos->occupied[kPawn] & BB_SQUARE(move_from(move))) return false;
+    if (!(pos->occupied[kPawn] & BB_SQUARE(move_from(move)))) return false;
     if (pos->occupied_co[!pos->turn] & BB_SQUARE(move_to(move))) return false;
     return true;
 }
