@@ -182,7 +182,7 @@ void get_master(struct evhttp_request *req, void *context) {
     // Add top games.
     evbuffer_add_printf(res, "  \"topGames\": [\n");
     for (size_t i = 0; i < record->num_refs && i < topGames; i++) {
-        char game_id[9];
+        char game_id[9] = {};
         strncpy(game_id, record->refs[i].game_id, 8);
 
         size_t pgn_size;
