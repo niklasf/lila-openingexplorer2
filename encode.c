@@ -126,6 +126,7 @@ void master_record_add_move(struct master_record *record,
             else record->moves[i].black++;
 
             record->moves[i].average_rating_sum += ref->average_rating;
+            master_record_sort(record);
             return;
         }
     }
@@ -142,6 +143,8 @@ void master_record_add_move(struct master_record *record,
 
     record->num_moves++;
     record->moves = stats;
+
+    master_record_sort(record);
 }
 
 uint8_t *encode_master_record(uint8_t *buffer, const struct master_record *record) {

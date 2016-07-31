@@ -85,6 +85,7 @@ void test_master_record() {
     struct master_record *decoded = master_record_new();
     decode_master_record(buffer, decoded);
     master_record_print(decoded);
+    assert(decoded->refs[0].average_rating == 2201);
     master_record_free(decoded);
 }
 
